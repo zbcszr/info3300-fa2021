@@ -10,6 +10,7 @@
   <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
 
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
+  <link rel="stylesheet" href="../css/hljs-base16.css">
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
 
 </head>
@@ -38,68 +39,136 @@
     
     <!-- This block will be automatically filled with syntax-highlighted code from the script below -->
     <h5>Code for today:</h5>
-      <pre id="display1" class="hljs javascript">
-      </pre>
-      <pre id="display2" class="hljs javascript">
-      </pre>
+    <pre>
+      <code id="display1" class="hljs language-javascript">
+      </code>
+    </pre>
+    <pre>
+      <code id="display2" class="hljs language-javascript">
+      </code>
+    </pre>
 
 
     <!--- Code for today's class --->
     <script id="notes1">
-
+    
       // Try pasting these commands into your browser console
       
       // Console.log is our friend
       console.log('Hello World');
 
       // Let's explore some Javascript types!
-      console.log("--- Checking out some types ---")
-      
-      
-      
-      
-      
+      console.log("--- Testing some types ---")
+      console.log("---Numbers!");
+      console.log(typeof(1));
+      console.log(typeof(1.2));
+      console.log(typeof(Math.PI));
+      console.log("---Strings!");
+      console.log(typeof("hello"));
+      console.log(typeof('hello'));
+      console.log("---Classes?");
+      console.log(typeof(Math));
+      console.log("---Objects?");
+      console.log(new Object());
+      console.log(typeof(new Object()));
+      console.log(typeof(/regex/));
+      console.log("---Functions?");
+      // It's more complicated -- functions are also objects
+      console.log(typeof( console.log ));
+      console.log("---Undefined and null?");
+      console.log(typeof(undefined));
+      // Second bit of weirdness -- it shows as object but its type actually is null (legacy reasons)
+      console.log(typeof(null));     
+      // Test some unicode  (note <meta> tag in file)
+      console.log("---What about unicode?");
+      console.log("ドーナツ");
+      console.log(typeof("ドーナツ"));
       
       // Learn a bit more about Objects
-      // console.log("--- Testing [] and {} ---")
-
+      console.log("--- Testing [] and {} ---")
+      console.log("Lists and dicts")
+      let list = [1, 2, 3];
+      console.log( list );
+      console.log(typeof( list )); 
+      // It says it's an object -- but arrays are a special kind of object (see length property)
       
+      // Every object is a dictionary in Javascript -- properties function as key/value pairs
+      let dict = {"a": 1, "b": 2};
+      console.log( dict );
+      console.log(dict["a"]);
+      console.log(dict.a); // shortcut to access properties with plain text names
       
-      
-
+      // What about that length part of a dict? What is it?
+      list.newKey = "this is a new key on a list";
+      console.log(list);
       
       // So what can accept keys?
-      // console.log("--- So what works like a dict? ---");
-      // let differentTypes = [3, "hello", new Object(), [1,2,3], function(x) {}, console];
-      // for (let item of differentTypes) {
-      //   console.log( item, typeof(item) );
-      //   item['test'] = "keyAdded";
-      //   console.log( item['test'] ); 
-      // } 
+      console.log("--- So what works like a dict? ---");
+      let differentTypes = [3, "hello", new Object(), [1,2,3], function(x) {}, console];
+      for (let item of differentTypes) {
+        console.log( item, typeof(item) );
+        item['test'] = "keyAdded";
+        console.log( item['test'] ); 
+      } 
+      // Though it's often a terrible idea, you can add properties to all sorts of things
+      // In some libraries you will find that they add properties to function calls and all sorts of other objects
+      //  This can be extremely convenient, but you may not notice them unless you check docs and console.log()
       
       
-      // Types can get a bit unexpected in JS
-      // console.log("--- Now exploring type coercion ---")
-      
-      
+      console.log("--- Now exploring type coercion ---")
+      // A simple addition?
+      console.log(0 + '0'); //  ???
+
+      // Type coercion
+      console.log(3 + "Rzeszotarski");
+      console.log("1" + 2);
+      console.log(1 + "2");
+      console.log(false + "Rzeszotarski");
+      console.log(true + false);
+      console.log("true" + false);
+      console.log([1,2,3] + 2)
+      // Only possibilities: ->string,  ->number,  ->boolean
+      // Learn more at https://www.freecodecamp.org/news/js-type-coercion-explained-27ba3d9a2839/
       
       // Why does this matter?
+      // Because coercion can silently cause unexpected results!
+      let colorDict = {'apple': 'red', 'berry': 'blue'} ;
+      // document.getElementById("rectangle").setAttribute("fill",colorDict.apple);
+      document.getElementById("rectangle").setAttribute("fill",colorDict.banana);
       
       
-      
+      // Let's just see something...
+      console.log( (true + 1) == "2" );
       
       // Comparison weirdness
-      // console.log("--- Now trying some comparisons ---")
+      console.log("--- Now trying some comparisons ---")
+      console.log(0 == '0'); // aggressive casting
+      //  (it can get very, very weird)
+      console.log([] == 0);
+      console.log([1] == true);
+      console.log([[]] == 0);
+      console.log([[[[]]]] == 0);
+      console.log([[[[]]]] == []);
       
+      console.log("Explicit comparison", '0' === 0);
+      // Learn more at https://dorey.github.io/JavaScript-Equality-Table/
       
-      
+      //  null, undefined, and NaN are special cases
+      console.log(6 + null);
+      console.log(null === 0);
+      console.log(null === undefined);
+      console.log(NaN === NaN);
+      console.log([1,2,3] === [1,2,3]);
       
 
       // Shortcircuiting of logical statements
-      // console.log("--- Shortcircuiting ---");
-
-
-
+      console.log("--- Shortcircuiting ---");
+      true || console.log("logged-or") || false;
+        // true short-circuits the OR so console.log doesn't trigger
+      true && console.log("logged-and") && false; 
+        // true does not short-circuit an AND so console.log triggers
+      false && console.log("logged-and") && false; 
+        // false short-circuits the AND so console.log doesn't trigger
 
     </script>
 
@@ -107,16 +176,16 @@
     <script id="notes2">
     
       // How do two script tags interact with each other?
-      let test = "script tags. how do they work?";
       
       
       // * Let's talk JSON
+      let obj = [{"name":"DDWA", "number":3300 },{"name": "Java", "number": 2110},{"name": "Python", "number": 1110}];
+      console.log(obj);
+      let jsonObj = JSON.stringify(obj);
+      console.log(jsonObj)
       
-      
-
-      // let obj = [{"name":"DDWA", "number":3300 },{"name": "Java", "number": 2110},{"name": "Python", "number": 1110}];
-      // console.log(obj);
-      
+      let recoveredObject = JSON.parse(jsonObj)
+      console.log(recoveredObject)
 
 
       // This one won't parse because it breaks JSON specifications
@@ -135,8 +204,17 @@
 
     <!--- calls the highlight library to fill the <pre> tag with code --->
     <script>
-    document.getElementById("display1").innerText = document.getElementById("notes1").innerText;
-    document.getElementById("display2").innerText = document.getElementById("notes2").innerText;
+    function sanitize(s) {
+      return s.replace("<br>", "\\n")
+              .replace(/&/g, "&amp;")
+              .replace(/</g, "&lt;")
+              .replace(/>/g, "&gt;")
+              .replace(/"/g, "&quot;")
+              .replace(/'/g, "&#039;");
+            }
+    document.getElementById("display1").innerHTML = sanitize( document.getElementById("notes1").innerText);
+    document.getElementById("display2").innerHTML = document.getElementById("notes2").innerText;
+    //hljs.configure({ ignoreUnescapedHTML: true })
     hljs.highlightAll();
     </script>
 
