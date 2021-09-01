@@ -213,7 +213,7 @@
               .replace(/'/g, "&#039;");
             }
     document.getElementById("display1").innerHTML = sanitize( document.getElementById("notes1").innerText);
-    document.getElementById("display2").innerHTML = document.getElementById("notes2").innerText;
+    document.getElementById("display2").innerHTML = sanitize( document.getElementById("notes2").innerText);
     //hljs.configure({ ignoreUnescapedHTML: true })
     hljs.highlightAll();
     </script>
