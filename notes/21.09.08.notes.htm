@@ -47,7 +47,17 @@
     <br>
     
     <!--- SVG goes here! --->
-    
+    <svg width=500 height=500 style="border: 1px solid black; margin: 30px;">
+      <!--- stuff on the bottom --->
+      <line x1=25 x2=50 y1=25 y2=300 stroke="goldenrod" stroke-width=3 />
+      <circle cx=50.5 cy=300 r=20 fill="purple" />
+      <rect x=100 y=400 width=200 height=200 fill="orange" stroke="limegreen" stroke-width=5 />
+      <rect x=300 y=50 width=200 height=200 style="fill:deepskyblue; stroke:red; stroke-width:10;" />
+      
+      <text x=100 y=100 style="font: bold 20px sans-serif;" dominant-baseline="hanging" text-anchor="middle"> HELLO </text>
+      
+      <!--- stuff on the top --->
+    </svg>
     
 
 
@@ -81,8 +91,21 @@
       <path style="stroke:#ccc; stroke-width:1" d="M 180 0 V 200" />
 
       <!--- Now let's draw a polygon --->
-      
-      
+      <path style="stroke:lightpink; stroke-width:10; fill:limegreen;"
+         d="M 40 40 
+            H 140 
+            L 100 100
+            V 180 
+            H 20 
+            Z" />
+      <!-- in plain english:
+        Move the pencil to 40,40
+        Make a horizontal line from 40,40 until x=140  (i.e. 140,40)
+        Make a line to 100,100
+        Make a vertical line until y=180  (i.e. 100,180)
+        Make a horizontal line until x=20 (i.e. 20,180)
+        Close out the path by returning to the first drawn point
+      --->
       
       
       
@@ -103,11 +126,17 @@
     
     
     <svg height="200" width="200">
-      
+        <line x1="-10" x2="10" y1="0" y2="0" style="stroke: black; stroke-width:3;"/>
+        <line y1="-10" y2="10" x1="0" x2="0" style="stroke: black; stroke-width:3;"/>
     </svg>
     
+    <p>The g tag "groups" elements so that it is easy to assign properties to sets of elements with one command.</p>
+    
+    
+    
+    
 
-    <p>Now let's move the origin to the center. The g tag assigns properties to sets of elements.</p>
+    <p>Now let's move the origin to the center.</p>
     
     
     
