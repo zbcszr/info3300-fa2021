@@ -1,0 +1,232 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>INFO 3300 - September 8</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+  
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
+  <link rel="stylesheet" href="../css/hljs-base16.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+
+
+</head>
+<body>
+  <div class="container larger">
+    <h3>Prompt for Wednesday, September 8</h3>
+    <p>
+      You can access these files from the <a href="https://github.com/jeffrz/info3300-sp2021">course Github repository</a>. The repository will be updated with notes shortly after class. While I encourage you to make use of a local copy of the repository so you can take notes, the version at this site will always be up-to-date and accessible. Execute a <tt>git pull</tt> in your repository directory to download new files. Prompt files won't change after posting, so feel free to modify them as you like. Here is an <a href="http://rogerdudler.github.io/git-guide/">informal guide to git</a>.
+    </p>
+    <p>
+      To develop efficiently, have a local web server running. Python has a simple, built-in server. Use <tt>python -m http.server</tt> for python 3; use <tt>python -m SimpleHTTPServer 8000</tt> for python 2 (execute python in cmd for version number).
+    </p>  
+    <p>
+      Here are some SVG resources:
+      <ul>
+          <li> <a href="https://www.w3.org/TR/2018/CR-SVG2-20181004/">Current SVG Specification</a></li>
+          <li> <a href="https://developer.mozilla.org/en-US/docs/Web/SVG">Mozilla SVG Documentation</a></li>
+          <li> <a href="https://flaviocopes.com/svg/">https://flaviocopes.com/svg/</a></li>
+          <li> <a href="https://alignedleft.com/tutorials/d3/an-svg-primer">https://alignedleft.com/tutorials/d3/an-svg-primer</a></li>
+          <li> <a href="http://tutorials.jenkov.com/svg/svg-transformation.html">http://tutorials.jenkov.com/svg/svg-transformation.html</a></li>
+          <li> <a href="https://www.sarasoueidan.com/blog/svg-transformations/">https://www.sarasoueidan.com/blog/svg-transformations/</a></li>
+      </ul>
+    </p>
+    
+  
+  
+  
+  
+    <h5>HTML for today:</h5>
+
+    <h3>Shapes and Coordinates</h3>
+
+    <p>The coordinate system starts at the top left corner, (0,0). Positive y values move down towards the bottom. Positive x values move towards the right. We can use DOM attributes or CSS to apply styles to elements.</p>
+
+    <br>
+    
+    <!--- SVG goes here! --->
+    <svg width=500 height=500 style="border: 1px solid black; margin: 30px;">
+      <!--- stuff on the bottom --->
+      <line x1=25 x2=50 y1=25 y2=300 stroke="goldenrod" stroke-width=3 />
+      <circle cx=50.5 cy=300 r=20 fill="purple" />
+      <rect x=100 y=400 width=200 height=200 fill="orange" stroke="limegreen" stroke-width=5 />
+      <rect x=300 y=50 width=200 height=200 style="fill:deepskyblue; stroke:red; stroke-width:10;" />
+      
+      <text x=100 y=100 style="font: bold 20px sans-serif;" dominant-baseline="hanging" text-anchor="middle"> HELLO </text>
+      
+      <!--- stuff on the top --->
+    </svg>
+    
+
+
+    <h3>Paths</h3>
+
+    <p>This is the most complicated SVG element, but also one of the most useful. It contains <a href="https://www.w3.org/TR/SVG/paths.html#PathData">a tiny programming language</a>.</p>
+
+    <br>
+
+    <svg height=200 width=200 style="border:1px solid black; margin-bottom: 50px;">
+      
+      <!--- Making some gridlines! --->
+      <path style="stroke:#ccc; stroke-width:1" d="M 0 20 H 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 0 40 H 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 0 60 H 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 0 80 H 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 0 100 H 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 0 120 H 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 0 140 H 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 0 160 H 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 0 180 H 200" />
+
+      <path style="stroke:#ccc; stroke-width:1" d="M 20 0 V 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 40 0 V 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 60 0 V 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 80 0 V 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 100 0 V 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 120 0 V 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 140 0 V 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 160 0 V 200" />
+      <path style="stroke:#ccc; stroke-width:1" d="M 180 0 V 200" />
+
+      <!--- Now let's draw a polygon --->
+      <path style="stroke:lightpink; stroke-width:10; fill:limegreen;"
+         d="M 40 40 
+            H 140 
+            L 100 100
+            V 180 
+            H 20 
+            Z" />
+      <!-- in plain english:
+        Move the pencil to 40,40
+        Make a horizontal line from 40,40 until x=140  (i.e. 140,40)
+        Make a line to 100,100
+        Make a vertical line until y=180  (i.e. 100,180)
+        Make a horizontal line until x=20 (i.e. 20,180)
+        Close out the path by returning to the first drawn point
+      --->
+      
+      
+      
+    </svg>
+
+
+
+
+    <h3>Transformations</h3>
+
+    <p>Transformations are another useful (but a bit tricky) tool. How do we stretch, rotate, and shift elements, and how does the order of these operations affect the result?</p>
+
+    <p>Wrapping all elements in a translate() transformation moves the coordinate system. We often want to do this to add a margin around a plot while keeping our mapping from data to x,y positions simple.</p>
+
+    <br>
+
+    <p>First, let's mark the origin (0,0) with crosshairs.</p>
+    
+    <svg height="200" width="200">
+        <line x1="-10" x2="10" y1="0" y2="0" style="stroke: black; stroke-width:3;"/>
+        <line y1="-10" y2="10" x1="0" x2="0" style="stroke: black; stroke-width:3;"/>
+    </svg>
+    
+    <p>The g tag "groups" elements so that it is easy to assign properties to sets of elements with one command.</p>
+    
+    <svg height="200" width="200">
+      <g class="datapoints" style="stroke: black; stroke-width:3;">
+        <line x1="-10" x2="10" y1="0" y2="0" />
+        <line y1="-10" y2="10" x1="0" x2="0" />
+      </g>
+    </svg>
+    
+    
+    <p>Now let's move the origin to the center using a translate(dx,dy) transformation.</p>
+    
+    <svg height="200" width="200">
+      <g transform="translate(100,100)">
+        <line x1="-10" x2="10" y1="0" y2="0" style="stroke: black; stroke-width:3;"/>
+        <line y1="-10" y2="10" x1="0" x2="0" style="stroke: black; stroke-width:3;"/>
+      </g>
+    </svg>
+    
+
+    <p>Let's create some shapes in our translated space. Note how their position on screen is adjusted by the translation, but the cx and cy of the circle stay the same. A circle at (30,40) shows onscreen at (130,140) if you apply translate(100,100).</p>
+    
+    <svg height="200" width="200">
+      <g transform="translate(100,50) scale(1.5)">
+        <line x1="-10" x2="10" y1="0" y2="0" style="stroke: black; stroke-width:3;"/>
+        <line y1="-10" y2="10" x1="0" x2="0" style="stroke: black; stroke-width:3;"/>
+        <circle r=10 cx=30 cy=40 fill="red"/>
+        <circle r=10 cx=20 cy=60 fill="aquamarine"/>
+      </g>
+    </svg>
+    
+    
+    
+
+    <p>You can also perform a translation inside of a translation!.</p>
+    
+    <svg height="200" width="200">
+      <g transform="translate(100,50)">
+        <line x1="-10" x2="10" y1="0" y2="0" style="stroke: black; stroke-width:3;"/>
+        <line y1="-10" y2="10" x1="0" x2="0" style="stroke: black; stroke-width:3;"/>
+        <g transform="translate(10,80)">
+          <circle r=10 cx=30 cy=40 fill="red"/>
+        </g>
+        <circle r=10 cx=20 cy=60 fill="aquamarine"/>
+      </g>
+    </svg>
+    
+    
+    
+
+    <p>Let's both perform a translation and scale one of the shapes. Transforms are processed in order, starting with the last one in the string.</p>
+    
+    <svg height="200" width="200">
+      <g transform=" translate(100,50) scale(1.5)">
+        <line x1="-10" x2="10" y1="0" y2="0" style="stroke: black; stroke-width:3;"/>
+        <line y1="-10" y2="10" x1="0" x2="0" style="stroke: black; stroke-width:3;"/>
+        <circle r=10 cx=30 cy=40 fill="red"/>
+        <circle r=10 cx=20 cy=60 fill="aquamarine"/>
+      </g>
+    </svg>
+    
+    
+
+    <p>The order matters! What happens if we scale first and then perform a translation? It looks weird because scale() and rotate() do this *with respect to (0,0)*. So scaling *after* moving pushes things a bit further because they expand out from (0,0). </p>
+    
+    <svg height="200" width="200">
+      <g transform="scale(1.5) translate(100,50)">
+        <line x1="-10" x2="10" y1="0" y2="0" style="stroke: black; stroke-width:3;"/>
+        <line y1="-10" y2="10" x1="0" x2="0" style="stroke: black; stroke-width:3;"/>
+        <circle r=10 cx=30 cy=40 fill="red"/>
+        <circle r=10 cx=20 cy=60 fill="aquamarine"/>
+      </g>
+    </svg>
+    
+
+    <p>Finally, let's try rotating our coordinate system. rotate(degrees) allows for this.</p>
+    <svg height="200" width="200">
+      <g transform="translate(100,50) rotate(45)">
+        <line x1="-10" x2="10" y1="0" y2="0" style="stroke: black; stroke-width:3;"/>
+        <line y1="-10" y2="10" x1="0" x2="0" style="stroke: black; stroke-width:3;"/>
+        <circle r=10 cx=30 cy=40 fill="red"/>
+        <circle r=10 cx=20 cy=60 fill="aquamarine"/>
+      </g>
+    </svg>
+    
+
+    <p>Note: It can be very confusing if you get the order wrong when rotate() gets involved! It also uses (0,0) as a point of rotation, so if you move things first then they will get spun about (0,0), leading to odd results. </p>
+    <svg height="200" width="200">
+      <g transform="rotate(45) translate(100,50)">
+        <line x1="-10" x2="10" y1="0" y2="0" style="stroke: black; stroke-width:3;"/>
+        <line y1="-10" y2="10" x1="0" x2="0" style="stroke: black; stroke-width:3;"/>
+        <circle r=10 cx=30 cy=40 fill="red"/>
+        <circle r=10 cx=20 cy=60 fill="aquamarine"/>
+      </g>
+    </svg>
+    
+  </div>
+</body>
+</html>
