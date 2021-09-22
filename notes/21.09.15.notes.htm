@@ -27,7 +27,7 @@
 
   <h5>HTML for today:</h5>
 
-  <svg id="all" height="400" width="400" style="background: #F5F5F5; margin-bottom: 30px;">
+  <svg id="all" height="400" width="400" style="background: #F5F5F5; margin-bottom: 30px">
     <!--- We're going to be populating this dynamically today --->
   </svg>
   <br/>
@@ -59,40 +59,195 @@
     //  This will take the form of a bar chart -- but we are using a trick and not creating <rect> for each bar
     //  Instead, we'll make a thick vertical <line> for each bar. I don't recommend you do this outside of toy examples
 
+
+    // First two linear scales, age -> x-pixels, lived -> y-pixels
+
+    // Think of "domain" and "range" as "input" and "output",
+    //  NOT as x and y.
+
+    // The domain takes a single argument, an array (NOT two arguments), which represents two inputs. 
+    // The range works the same way: we give it a two-element array.
+    // Behind the scenes, scaleLinear first does (value - domainMin) / (domainMax - domainMin) to get a 
+    //  0 to 1 value, then it multiplies the result using: (result * (rangeMax - rangeMin)) + rangeMin
+    // We often choose domain min and max to be reasonable extremes, but the function will still work for
+    //  values outside these values because the domain does not "clamp", or restrict values to the min and 
+    //  the max -- this can lead to unexpected results where points go beyond the range min and max.
+
+
+    let svg = d3.select("svg#all");
+    console.log(svg);
+    let width = svg.attr("width");
+    let height = svg.attr("height");
+
     
-    
-    
-    
-    
+    // We figured this out later in the lecture and pasted it above
+    let maxMortality = d3.max(passengers, (d) => { return Math.max(d['lived'],d['died']); });
+    // d3.max takes an array and a "getter" function. It calls the function on each element in the array and expects it to return the item for d3.max to investigate -- in this case, for each element we return lived or died, whichever is higher. d3.max then iterates and finds the large number returned (the "maximum of the maximums")
+
+    let ageScale = d3.scaleLinear()
+      .domain([0,80]) // From our data
+      .range([10,width-10]); // We want to space things inwards a bit
+    // d3.scaleLinear() returns a FUNCTION which we then assign to ageScale (because functions are also objects in JS). This allows us to call ageScale(number)
+
+    let livedScale = d3.scaleLinear()
+                       //.domain([0,200]) // We started by picking an arbitrary max number by guess
+                       .domain([0,maxMortality]) // Fixed version - we determined the maximum above)
+                       .range([0, height/2.0 - 10]); // Let's end in the middle
+                        // inverting range will alleviate the strange math in .attr(y2)
+
+
+    // Now let's draw some lines!
+    passengers.forEach( (d, i) => {
+      svg.append("line")
+        .attr("x1",ageScale( d['age'] ))
+        .attr("x2",ageScale( d['age'] ))
+        .attr("y1",height/2)
+        .attr("y2",height/2 - livedScale( d['lived'] )) 
+          // Note, because our bars rise upwards from the bottom line, we have to do some math trickery here because it doesn't match SVG coord system
+        .style("stroke", "#5555F0")
+        .style("stroke-width", 10);
+    });
+
+
     // --- 2. What about deaths? (oop, things are getting pretty dark)
     //  We can make a double histogram for this!
-    
-    
-    
+    //  (we set the domain at 200, died overflowed -- we need to find max!)
+    // We found it here, then pasted the code to the top and used it in our scales
 
+    let diedScale = d3.scaleLinear()
+                      //.domain([0,200]) // We started by picking an arbitrary max number by guess
+                      .domain([0, maxMortality]) // Fixed version
+                      .range([0, height/2.0 - 10]); // Let's start in the middle
+
+    passengers.forEach( (d, i) => {
+      svg.append("line")
+        .attr("x1",ageScale( d['age'] ))
+        .attr("x2",ageScale( d['age'] ))
+        .attr("y1",height/2)
+        .attr("y2",height/2 + diedScale( d['died'] ))
+        // Math works differently here because our bars are "hanging" from height/2 which matches the coordinates of the SVG canvas
+        .style("stroke", "#F05555")
+        .style("stroke-width", 10);
+    });
+
+    // How about some labels? We can reuse our existing scales
+    passengers.forEach( (d, i) => {
+      
+      // At the top
+      // svg.append("text")
+      //  .attr("text-anchor","middle")
+      //  .attr("font-size","15px")
+      //  .attr("x",ageScale(d['age']))
+      //  .attr('y',10)
+      //  .text(d['age']);
+
+      // How can we get them to appear right above bars? 
+      // USE THE SCALES!
+      svg.append("text")
+        .attr("text-anchor","middle")
+        .attr("font-size","15px")
+        .attr("x",ageScale(d['age']))
+        .attr('y',height/2 - livedScale( d['lived'] ) - 10)
+        .text(d['age']);
+    });
 
 
 
     // --- 3. Let's break the data down by gender now!
     
-    
-    
-    
-    
-    
+    // One thing we'll do often is make some new data by looping through our dataset
+    // Here we'll construct a % survived metric for each age band
+    passengersMale.forEach(  d => {
+      // We initially just had this
+      // d.percentSurvived = d.lived / (d.lived + d.died);
+      // But when we got to the female chart we had columns with 0 lived & 0 died, which threw NaN 
+      //  because we were trying to divide by 0. This made the scales angry and they returned null
+      if ((d.lived + d.died) < 1) {
+        d.percentSurvived = 0;
+      }
+      else {
+        d.percentSurvived = d.lived / (d.lived + d.died);
+      }
+    }); 
+    passengersFemale.forEach(  d => {
+      if ((d.lived + d.died) < 1) {
+        d.percentSurvived = 0;
+      }
+      else {
+        d.percentSurvived = d.lived / (d.lived + d.died);
+      }
+    }); 
+    console.log(passengersMale)
+    console.log(passengersFemale)
 
-    // svg.append("text").text("Male Passengers").attr("x",10).attr("y",20).style("font-size","15px");
+    // We first put in let by mistake -- IT WILL CAUSE EXCEPTION BECAUSE WE'VE ALREADY DECLARED THE VARIABLE
+    svg = d3.select("svg#male");
+    console.log(svg)
+    width = svg.attr("width");
+    height = svg.attr("height");
+
+    svg.append("text").text("Male Passengers").attr("x",10).attr("y",20).style("font-size","15px");
 
 
+    // Let's make some new scales for this
+    // We can't re-use ageScale, because we have a different width
+    ageScale = d3.scaleLinear()
+      .domain([0,80])
+      .range([10,width-10]);
+    percentScale = d3.scaleLinear()
+      .domain([0,1])  // We manually set this since we want 0 to 100%
+      .range([height - 10,30]); 
+        // For range we're using a trick -- because the SVG coord system is "upside-down", we can configure the
+        //  scale in reverse (i.e. [max, min] instead of [min, max]) so that it "does the math" for us!
+    
+    // Let's also make a fun color scale
+    let colorScale = d3.scaleLinear()
+      .domain([0,1])
+      .range(['navy','turquoise'])
+      .interpolate(d3.interpolateHcl);
+        
 
+    // Now make the lines
+    passengersMale.forEach((d, i) => {
+      svg.append("line")
+        .attr("x1",ageScale( d.age ))
+        .attr("x2",ageScale( d.age ))
+        .attr("y1",height - 9)  // We tweaked this to 9 so that tiny bars show up for 0s
+        .attr("y2",percentScale( d.percentSurvived ))
+        .style("stroke", colorScale( d.percentSurvived ) ) // Using the color scale now too
+        .style("stroke-width", 10);
+      svg.append("text")
+        .attr("text-anchor","middle")
+        .attr("font-size","10px")
+        .attr("x",ageScale(d.age))
+        .attr('y',percentScale( d.percentSurvived ) - 10)
+        .text(d.age);
+    });
 
+    // Now do female side of dataset
+    // We can re-use the scales since the SVG are the same size, BUT be sure to select the new SVG
+    svg = d3.select("svg#female");
+    console.log(svg)
 
-    // svg.append("text").text("Female Passengers").attr("x",10).attr("y",20).style("font-size","15px");
+    svg.append("text").text("Female Passengers").attr("x",10).attr("y",20).style("font-size","15px");
     
+    passengersFemale.forEach((d, i) => {
+      svg.append("line")
+        .attr("x1",ageScale( d.age ))
+        .attr("x2",ageScale( d.age ))
+        .attr("y1",height - 10)
+        .attr("y2",percentScale( d.percentSurvived ))
+        .style("stroke", colorScale( d.percentSurvived ) )
+        .style("stroke-width", 10);
+      svg.append("text")
+        .attr("text-anchor","middle")
+        .attr("font-size","10px")
+        .attr("x",ageScale(d.age))
+        .attr('y',percentScale( d.percentSurvived ) - 10)
+        .text(d.age);
+    });
     
-    
-    
-    
+    // Notice that I avoided using any SCALE puns throughout the class today. Doing that was harder than scaling Mt Ranier, by my measure.
   </script>
 
   
