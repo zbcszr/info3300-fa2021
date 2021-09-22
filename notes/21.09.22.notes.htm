@@ -1,0 +1,202 @@
+<html><head>
+<title>INFO 3300 - September 22</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+  
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
+  <link rel="stylesheet" href="../css/hljs-base16.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+  
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  
+  <style>
+  
+    .legend span {
+      margin-right: 10px;
+    }
+      
+    .gridlines line {
+      stroke: #bbb;
+    }
+    
+    .gridlines .domain {
+      stroke: none;
+    }
+    
+
+  </style>
+
+</head>
+<body>
+  <div class="container larger">
+  <h3>Notes for September 22</h3>
+  <p>
+    Our dataset is sourced from <a href="https://www.kaggle.com/bidyutchanda/top-10-highest-grossing-films-19752018">Kaggle</a>. It contains the top ten highest grossing movies for each year from 1975 to 2018. We'll graph the movies to see if certain genres perform better or are more popular in certain times.
+  </p>
+  <p>
+    Some other useful links: <a href="https://observablehq.com/@d3/d3-autotype">d3 autotype</a> | <a href="https://observablehq.com/@d3/continuous-scales#scale_symlog">different d3 scales</a> | <a href="https://observablehq.com/@d3/d3-scaleordinal">d3 ordinal scales</a> | <a href="https://github.com/d3/d3-format">d3 tick formatting</a>
+
+  <h5>HTML for today:</h5>
+
+  <svg id="scatterplot" height="400" width="600" style="margin-top:50px" >
+    <text id="label" x="590" y="5"  text-anchor="end" alignment-baseline="hanging"></text>
+    
+    
+  </svg>
+  
+  <div id="scatterLegend" class="legend"> </div>
+
+
+
+
+  <!-- This block will be automatically filled with syntax-highlighted code from the script below -->
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display" class="hljs javascript">
+    </code>
+  </pre>
+
+  <!--- Code for today's class --->
+  <script id="notes">
+
+  // ---- 1
+  // 0. Let's make a fancy scatterplot
+  // const svg = d3.select("svg#scatterplot");
+  // 
+  // const width = svg.attr("width");
+  // const height = svg.attr("height");
+  // const margin = {top: 10, right: 10, bottom: 50, left: 50};
+  // 
+  // const chartWidth = width - margin.left - margin.right;
+  // const chartHeight = height - margin.top - margin.bottom;
+  // 
+  // // This time we'll use another layer to make sure things stay ordered properly
+  // //  Remember that SVG draws from the top down, layering things on top of one another
+  // let annotations = svg.append("g").attr("id","annotations");
+  //                 // No translate here since our annotations may be outside of the chart area
+  // 
+  // let chartArea = svg.append("g").attr("id","points")
+  //                 .attr("transform",`translate(${margin.left},${margin.top})`);
+
+
+
+  // Import some CSV data
+  //   This time we'll use the autoType
+  // d3.autoType will try to do type coercion to make strings into numbers, etc
+  //  but it is very cautious and will give up if anything fails to coerce
+  // Check documentation to see the heuristics it uses
+  
+  d3.csv("../datasets/blockbusters.csv", d3.autoType )
+    .then( (data) => {
+    
+  // ------- START OF PROMISE ------
+  
+  
+  // 0. Check for data issues
+  console.log(data)
+  data.forEach( d => {
+    // Do we need to fix anything in our dataset?
+    
+  });
+  console.log(data)
+
+
+  // 1. Building the scales we need
+  // const yearExtent = d3.extent(data, d => d['year']);
+  // const yearScale = d3.scaleLinear().domain(yearExtent).range([0, chartWidth]);
+  // 
+  // const grossExtent = d3.extent(data, d => d['worldwide_gross']);
+  // const grossScale = d3.scaleLog().domain(grossExtent).range([chartHeight, 0]);
+  // 
+  // const imdbExtent = d3.extent(data, d => d['imdb_rating']);
+  // const imdbScale = d3.scaleLinear().domain(imdbExtent).range([3,8]);
+  
+  
+  
+  // 2. Draw some axes, make them fancy through using tickFormat
+  //   Look at the documentation for d3.format to see all of the different options
+  //       d3 tickformatting: https://github.com/d3/d3-format
+  
+  
+  
+  
+  
+  // 3. Start plotting circles and see what happens
+  data.forEach( (d, i) => {
+        
+    // Make each circle
+    
+        
+        
+    // 4. How do we add colors based on genre?
+    //  New color scale: https://observablehq.com/@d3/d3-scaleordinal
+        
+        
+        
+    // --- 2
+    // 5. Add some mouseovers
+    
+    
+    
+
+  });
+  // done with forEach
+  
+  
+  
+  
+  // --- 3
+  // Check out the results of genreScale now that we've colored a bunch of points
+  // Use this to add a legend!
+  
+  
+
+
+  
+  // ------- END OF PROMISE ------
+
+},
+(error) => { console.log(error) } );
+
+
+
+
+
+
+  // HELPER FUNCTION
+  //  lighten a color a little bit using d3 color functions
+  function lighten(color) {
+      
+      let hclColor = d3.hcl(color);
+      let luma = Math.min(130, hclColor.l + 30);
+      return d3.rgb( d3.hcl( hclColor.h, hclColor.c, luma ) );
+    
+  }
+
+
+  </script>
+
+  
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  
+  function sanitize(s) {
+    return s.replace("<br>", "\\n")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+          }
+    document.getElementById("display").innerHTML = sanitize( document.getElementById("notes").innerText);
+    hljs.highlightAll();
+  </script>
+
+
+  </div>
+</body>
+</html>
