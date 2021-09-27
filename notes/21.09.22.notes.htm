@@ -44,8 +44,8 @@
   <svg id="scatterplot" height="400" width="600" style="margin-top:50px" >
     <text id="label" x="590" y="5"  text-anchor="end" alignment-baseline="hanging"></text>
   </svg>
-  <!--- <button id="gross">Show by Gross Income</button>
-  <button id="genre">Show by Genre</button> --->
+  <button id="gross">Show by Gross Income</button>
+  <button id="genre">Show by Genre</button>
 
 
 
@@ -190,23 +190,63 @@
     // 4. How do we add colors based on genre?
     //  New color scale: https://observablehq.com/@d3/d3-scaleordinal
         
-        
-        
+    
+    
     // --- 2
     // 5. Add some mouseovers
-    
+    //  Mouseover triggers when mouse enters object's region
+    //  Mouseout triggers when mouse leaves the object's region
+    //  WARNING: Avoid placing new elements on top of an object when using mouseover
+    //           This can cause the two objects to fight, creating oscillating patterns
+    circle.on("mouseover", function() {
       
-    
+      // This is the first time we've seen *this*    (asterisks just for emphasis)
+      // When you're working with interactive events, you sometimes get access to *this*, a reserved
+      //  keywork in Javascript for cases like mouseovers
+      // *this* only works if you use function() at the top --- NO ANONYMOUS FUNCTIONS IN EVENTS
+      // In the case of a mouseover, *this* refers to the thing you're mousing over
+      // It means different things in different contexts - always check document
+      
+      d3.select(this)
+        .transition().duration(200)
+        .attr("stroke","black")
+        .attr("stroke-width", 4)
+        .attr("r", imdbScale(d['imdb_rating']) + 2)
+        .attr("fill", lighten( genreScale(d['Main_Genre']) ));
+        
+      // Note that we're still within the big data.forEach loop
+      // This is why we can still use d['imdb_rating'] -- a reference to d gets stored in the event
+      //  function when you instantiate the mouseover and is then recovered during the event 
+      
+      d3.select("#label").text(d['title']);
+      
+    });
 
-  });
-  // done with forEach
+    // Make sure to clean up effects on mouseout
+    circle.on("mouseout", function() {
+      // Make sure you use plain *this* and don't try to wrap it with quotes like "this"
+      // It's a special reserved word
+      
+      d3.select(this)
+        .transition().duration(200)
+        .attr("stroke-width", 0)
+        .attr("r", imdbScale(d['imdb_rating']))
+        .attr("fill", genreScale(d['Main_Genre']) );
+      
+      d3.select("#label").text("");
+    });
   
-  
-  
+
+
+  });  
   
   
   // What about interactivity?
-  // d3.select("#gross").on( ???,  ??? )
+  d3.select("#gross").on('click',  function() {
+    
+    d3.selectAll("This would be hard to get working with a forEach") 
+    
+  } )
   
 
 
