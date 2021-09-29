@@ -14,6 +14,13 @@
   
   <style>
   
+  .gridlines .domain {
+    display: none;
+  }
+  
+  .gridlines line {
+    stroke: #444;
+  }
     
 
   </style>
@@ -54,7 +61,7 @@
 
   <!--- Code for today's class --->
   <script id="notes1">
-
+  
   // Do the usual things to set up the chart area and incorporate margins
   const svg = d3.select("svg#lineplot");
   const width = svg.attr("width");
@@ -72,54 +79,171 @@
     .then( (data) => {
       
   // 1. Check data quality
-  console.log(data)
-  
-  
-  // 2. Scales
-  
-  
+  //    Mercifully, the data import cleanly (because I already did some cleanup in Excel!)
+  //      but... we need dates to work correctly -- for this we need JS Date objects
+  console.log(data);
+
+  // Make some Date objects
+  // "2008-4-1" ---> %Y-%m-%d pattern
+  const timeParser = d3.timeParse('%Y-%m-%d');
+  data.forEach( d => {
+    d['date'] = timeParser(d["String Date"]);
+  });
+
+  // Scales
+  //  First one is easy
+  const carbonExtent = d3.extent(data, d => d['Carbon Dioxide (ppm)']);
+  const carbonScale = d3.scaleLinear().domain(carbonExtent).range([chartHeight, 0]);
+
+  // 2. Second, we need to spread dates across the X axis
+  // Since we made JS date objects, we can use the usual D3 functions and a .scaleTime()
+  const dateExtent = d3.extent(data, d => d['date']);
+  const dateScale = d3.scaleTime().domain(dateExtent).range([0,chartWidth]);
+
+  // Y axis
+  let leftAxis = d3.axisLeft(carbonScale)
+  let leftGridlines = d3.axisLeft(carbonScale)
+                        .tickSize(-chartWidth-10)
+                        .tickFormat("")
+  annotations.append("g")
+    .attr("class", "y axis")
+    .attr("transform",`translate(${margin.left-10},${margin.top})`)
+    .call(leftAxis)
+  annotations.append("g")
+    .attr("class", "y gridlines")
+    .attr("transform",`translate(${margin.left-10},${margin.top})`)
+    .call(leftGridlines);
+
+  // X axis
+  let bottomAxis = d3.axisBottom(dateScale)
+  let bottomGridlines = d3.axisBottom(dateScale)
+                          .tickSize(-chartHeight-10)
+                          .tickFormat("")
+  annotations.append("g")
+    .attr("class", "x axis")
+    .attr("transform",`translate(${margin.left},${chartHeight+margin.top+10})`)
+    .call(bottomAxis);
+  annotations.append("g")
+    .attr("class", "x gridlines")
+    .attr("transform",`translate(${margin.left},${chartHeight+margin.top+10})`)
+    .call(bottomGridlines);
+
+
   // 3. Before we start drawing, we need a line generator
   //  this will help us to draw the path based on data, which otherwise is very complicated
-  
-  
-  
+  // NOTE: The line generator does not take in any data at this stage
+  //  We're just "programming" it to know what to do when you hand it data
+  //  In other words, we're saying "when you get a data point, here's what your X value should be" using functions
+  var lineGen = d3.line()
+                  .x( d => dateScale(d['date']) )
+                  .y( d => carbonScale(d['Carbon Dioxide (ppm)']) )
+                  .curve(d3.curveMonotoneX);  // this configures whether straight lines connect your data points
+                                              //  or if it blends between points using a curve; see d3.line docs
+
   // 4. Append a <path>, bind the data, and run the generator 
-  
-  
-  
+  //  The generator is "run" in the last command.
+  chartArea.append("path")
+           .datum(data)
+           .attr("class", "line")
+           .attr("fill", "none")
+           .attr("stroke", "steelblue")
+           .attr("stroke-width", 3)
+           .attr("d", lineGen);
+           // .datum has given our entire dataset to the <path> element
+           // so, because lineGen is a _function_, the .attr("d", lineGen) command is really working like
+           //    a data-based .attr call, such as .attr("d", d => lineGen(d)). Because we've put the whole dataset
+           //    into the <path> element, this works out so that we're really saying lineGen(data)
+
+
   // 5. Let's add some circles too!
-  
-  
-  
-  
+  chartArea.selectAll("circle").data(data)
+           .join("circle")
+           .attr("r", 3)
+           .attr("fill", "navy")
+           .attr("cx", d => dateScale(d['date']) )
+           .attr("cy", d => carbonScale(d['Carbon Dioxide (ppm)']) );
+
+
   // 6. Stretch goal - add a detailed mouseover
-  
+
   // Add marker lines, circles, and label to use in our mouseovers
-  // let mouseGroup = chartArea.append("g");
-  // let xMarker = mouseGroup.append("line")
-  //   .attr("id","xMarker")
-  //   .attr("fill","none")
-  //   .attr("stroke","black")
-  //   .attr("stroke-width",1)
-  //   .attr("y1",0)
-  //   .attr("y2",chartHeight)
-  //   .attr("visibility","hidden");
-  // 
-  // let valueMarker = mouseGroup.append("circle")
-  //   .attr("id","valueMarker")
-  //   .attr("fill","none")
-  //   .attr("stroke","black")
-  //   .attr("stroke-width",2)
-  //   .attr("r",10)
-  //   .attr("visibility","hidden");
-  // 
-  // let label = mouseGroup.append("text")
-  //   .attr("id","label")
-  //   .attr("visibility","hidden");
+  let mouseGroup = chartArea.append("g");
+  let xMarker = mouseGroup.append("line")
+    .attr("id","xMarker")
+    .attr("fill","none")
+    .attr("stroke","black")
+    .attr("stroke-width",1)
+    .attr("y1",0)
+    .attr("y2",chartHeight)
+    .attr("visibility","hidden");
+
+  let valueMarker = mouseGroup.append("circle")
+    .attr("id","valueMarker")
+    .attr("fill","none")
+    .attr("stroke","black")
+    .attr("stroke-width",2)
+    .attr("r",10)
+    .attr("visibility","hidden");
+
+  let label = mouseGroup.append("text")
+    .attr("id","label")
+    .attr("visibility","hidden");
+
+
+  // Start simple - just see if we can make valueMarker track the mouse
+  // This won't work because it only seems to move correctly when there is stuff on the canvas
+  // For empty spaces it won't work because of the way mousemove is handled on SVG
+  // chartArea.on("mousemove", function(evt) {
+  //   console.log(evt);
+  //   let location = d3.pointer(evt);
+  //   console.log(location);
+  //   valueMarker.attr("visibility", "")
+  //              .attr("cx",location[0])
+  //              .attr("cy",location[1]);
+  // });
+
+
+  // // Instead, we have to resort to a more complicated solution
+  // // We paint an active region on the chart that is invisible but "catches" the mouse events for us
+  let activeRegion = mouseGroup.append("rect")
+    .attr("id","activeRegion")
+    .attr("width",chartWidth)
+    .attr("height",chartHeight)
+    .attr("fill","none")
+    .attr("pointer-events","all");
+    
+  // activeRegion is now the top-most item (even if invisible), so it should always catch the mouse events and never clash
+  // We will do some housekeeping to turn on and off the mouseover annotations when the mouse leaves or enters activeRegion
+
+  // When the mouse enters, show the annotations
+  activeRegion.on("mouseover", function() {
+    xMarker.attr("visibility","");
+    valueMarker.attr("visibility","");
+    label.attr("visibility",""); 
+  });
+
+  // When the mouse leaves, hide the annotations
+  activeRegion.on("mouseout", function() {
+    xMarker.attr("visibility","hidden");
+    valueMarker.attr("visibility","hidden");
+    label.attr("visibility","hidden"); 
+  });
+
+  // Handle when the mouse moves over the chart
+  // To improve usability, we will find the data point that is closest to the mouse location
+  // This is easier for users than trying to point to small individual points
   
-  
-  
-  
+  // We'll need a way to find the closest point to a specific date (from where the mouse is on the X axis)
+  activeRegion.on('mousemove', function(evt) {
+    console.log(evt) // update on move
+    let location = d3.pointer(evt);
+    console.log(location)
+    
+    // figure out what point is closest to our mouse
+    
+    // update our markers
+    
+  })
   
   
   
