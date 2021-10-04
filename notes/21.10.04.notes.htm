@@ -70,21 +70,185 @@
   d3.json("../datasets/bechdeltest-by-genre.json", d3.autoType)
     .then( (yearData) => {
       
+  // Mercifully, the data import cleanly (because I generated them using a Python script!)
   console.log(yearData);
   
   
-  // To start: Make a single bar chart for one of the year ranges
+  // We began by creating a single bar chart. Then we modified this code to work with buttons!
+  // For now, let's pick a dataset for one set of years
+  // const data = yearData['All Years']
+  // console.log(data)
+  // 
+  // // First scale is same as we've seen, but we'll hardcode the domain for percentages
+  // // Users will expect a 0 to 100 percent scale, so we'll go with that 
+  // const percentScale = d3.scaleLinear().domain([0,1]).range([chartHeight, 0]);
+  // 
+  // // We want bars across the X axis. How do we make those?
+  // // We use a scaleBand which creates segments for each nominal value automatically
+  // //  First we have to find the 'extent' of different nominal values
+  // const genres = d3.map(data, d => d.genre)  // d3.map just runs a function on each item in an array
+  // console.log(genres)
+  // // Now we make the scaleBand -- note the additional property called .padding to space bars out
+  // const genreScale = d3.scaleBand().domain(genres).range([0, chartWidth])
+  //                                  .padding(0.05);
+  // 
+  // // Make some axis labels and gridlines the usual way
+  // let leftAxis = d3.axisLeft(percentScale).tickFormat(d3.format('.0%'));
+  // let leftGridlines = d3.axisLeft(percentScale)
+  //                       .tickSize(-chartWidth-10)
+  //                       .tickFormat("")
+  // annotations.append("g")
+  //            .attr("class", "y axis")
+  //            .attr("transform",`translate(${margin.left-10},${margin.top})`)
+  //            .call(leftAxis)
+  // annotations.append("g")
+  //            .attr("class", "y gridlines")
+  //            .attr("transform",`translate(${margin.left-10},${margin.top})`)
+  //            .call(leftGridlines);
+  // let bottomAxis = d3.axisBottom(genreScale)
+  // // We're not making gridlines, since they'll just stick up from the bars
+  // annotations.append("g")
+  //            .attr("class", "x axis")
+  //            .attr("transform",`translate(${margin.left},${chartHeight+margin.top+10})`)
+  //            .call(bottomAxis);
+  // 
+  // // Now do the data join to make some rectangles
+  // chartArea.selectAll('rect.bar').data( data )
+  //          .join('rect').attr('class','bar')
+  //          .attr("fill", "steelblue")
+  //          .attr("x", d => genreScale(d.genre))
+  //          .attr("y", d => percentScale(d.percentpass))
+  //          .attr("height", d => percentScale(0) - percentScale(d.percentpass))
+  //          .attr("width", genreScale.bandwidth());
+           
+  
+  
+  // The first problem we observed once we got everything working was that the axis labels
+  //  were not being updated when you press the button -- we just get more labels on labels
+  // To fix this, we need to keep a reference to the axes OUTSIDE of the function
+  // This allows us to update the same axis object instead of creating new ones over and over again
+  // (Later, this also made it easy to animate the change)
+  
+  // We can just do the whole percent scale outside of the function since that never changes
+  const percentScale = d3.scaleLinear().domain([0,1]).range([chartHeight, 0]);
+  let leftAxis = d3.axisLeft(percentScale).tickFormat(d3.format('.0%'));
+  let leftGridlines = d3.axisLeft(percentScale)
+                        .tickSize(-chartWidth-10)
+                        .tickFormat("")
+  annotations.append("g")
+             .attr("class", "y axis")
+             .attr("transform",`translate(${margin.left-10},${margin.top})`)
+             .call(leftAxis)
+  annotations.append("g")
+             .attr("class", "y gridlines")
+             .attr("transform",`translate(${margin.left-10},${margin.top})`)
+             .call(leftGridlines);
+  
+  // The x axis is going to be changing because genres change - we need to store and adjust it
+  // We leave xAxis as a blank axis for now, but keep the reference outside of the function so we can rewrite it
+  let bottomAxis = d3.axisBottom()
+  let bottomAxisG = annotations.append("g")
+                           .attr("class", "x axis")
+                           .attr("transform",`translate(${margin.left},${chartHeight+margin.top+10})`)
+                           // Don't use .call() for a blank axis
+  
+  // // THIS IS THE ORIGINAL VERSION OF UPDATEBARS BEFORE THE ANIMATIONS WERE ADDED
+  // //  (both updateBars and updateBarsAnimated use the scales/axes above)
+  // function updateBars(yearKey) {
+  // 
+  //   const data = yearData[yearKey]
+  //   console.log(data)
+  // 
+  //   const genres = d3.map(data, d => d.genre) 
+  //   const genreScale = d3.scaleBand().domain(genres).range([0, chartWidth])
+  //                                    .padding(0.05);
+  // 
+  //   // We copied most of our code for axes outside of these when we added the buttons (see above)
+  //   // Now we just need to *update* the X axis for the new set of genres
+  //   bottomAxis.scale(genreScale)
+  //   // ... and (re)apply it
+  //   bottomAxisG.call(bottomAxis);
+  // 
+  //   // Now do the data join to make some rectangles
+  //   chartArea.selectAll('rect.bar').data( data )
+  //            .join('rect').attr('class','bar')
+  //            .attr("fill", "steelblue")
+  //            .attr("x", d => genreScale(d.genre))
+  //            .attr("y", d => percentScale(d.percentpass))
+  //            .attr("height", d => percentScale(0) - percentScale(d.percentpass))
+  //            .attr("width", genreScale.bandwidth());
+  // }        
+  
+  
+  // Stretch goal - make this animated!
+  //  NOTE: In order to animate within .join() we have to use some odd syntax
+  //    We use .call( enter => enter.transition().stufftoanimate )  in the chain
+  //    This is because your enter, update, and exit functions have to return the original chain
+  //    And just putting a plain .transition() in the chain would cause them to return an animation object instead
+  //    .call() serves to "wrap up" the transition so the correct thing is still returned to .join()
+  function updateBarsAnimated(yearKey) {
+    
+    const data = yearData[yearKey]
+    console.log(data)
+    
+    const genres = d3.map(data, d => d.genre) 
+    const genreScale = d3.scaleBand().domain(genres).range([0, chartWidth])
+                                     .padding(0.05);
+    
+    bottomAxis.scale(genreScale)
+    bottomAxisG.transition().call(bottomAxis);
+    
+    // Because d3 reuses elements in a greedy fashion by default, there is no guarantee that the "Action" bar stays
+    //  the "Action" bar during the animated join because d3 may re-assign it to a different genre during update
+    // To make sure d3 re-uses bars, we can give .data() a second parameter that uniquely identifies each data value
+    // d3 will check that value and re-use objects if they share the same identifier
+    // Here we want d3 to keep bars mapped to the same genre if possible, so we add d => d.genre to the data() call
+    chartArea.selectAll('rect.bar').data( data, d => d.genre )
+             .join( enter => enter.append('rect')
+                                  .attr('class','bar')
+                                  .attr("fill", "steelblue")
+                                  .attr("x", d => genreScale(d.genre))
+                                  .attr("y", d => percentScale(d.percentpass))
+                                  .attr("height", d => percentScale(0) - percentScale(d.percentpass))
+                                  .attr("width", genreScale.bandwidth())
+                                  .attr("opacity", 0) // Set opacity low, then animate to 1 to make them fade in
+                                  .call( enter => enter.transition().attr('opacity',1) ),
+                    update => update.call( update => update.transition()  // Animate resizing and movement
+                                                           .attr("fill", "steelblue")
+                                                           .attr("x", d => genreScale(d.genre))
+                                                           .attr("y", d => percentScale(d.percentpass))
+                                                           .attr("height", d => percentScale(0) - percentScale(d.percentpass))
+                                                           .attr("width", genreScale.bandwidth()) ),
+                    exit => exit.call( exit => exit.transition().attr('opacity',0).remove() ) ); // Animate opacity to fade out
+  }   
   
   
   
   
   
-  // Now add buttons and make interactive version
+  
+  // Let's make some buttons for each of the years in the dataset
+  // First we have to find the 'extent' of different years offered as keys
+  //  One easy way if it's a dict is to use a static method provided by Object: Object.keys( )
+  //   See more of them here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object#static_methods 
+  const allKeys = Object.keys(yearData).sort();
+  allKeys.forEach( d => {
+    // For each year key, add a new button to the button bar
+    d3.select("div#button-bar")
+      .append("button")
+      .text( d )
+      .on("click", function() {
+        // When it's clicked, call updateBars to update the chart
+        updateBarsAnimated( d );
+      })
+  });
   
   
+  // We do not want to start with a blank screen, so call it once
+  updateBarsAnimated('All Years');
   
+  // What's still missing? We probably should adjust the appearance of the button to tell the user which one they have picked as well as include a label in the corner of the chart to indicate the decade
   
-  // Stretch goal: Animate it!
   
   
   
