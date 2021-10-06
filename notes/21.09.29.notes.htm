@@ -228,22 +228,49 @@
     valueMarker.attr("visibility","hidden");
     label.attr("visibility","hidden"); 
   });
-
-  // Handle when the mouse moves over the chart
-  // To improve usability, we will find the data point that is closest to the mouse location
-  // This is easier for users than trying to point to small individual points
   
+  
+  // In order to make our mouseovers a bit more grounded, let's find the data point that is closest to the mouse location
   // We'll need a way to find the closest point to a specific date (from where the mouse is on the X axis)
-  activeRegion.on('mousemove', function(evt) {
-    console.log(evt) // update on move
+  // Refer to the docs on bisector to see how this works -- for now just know this is a common pattern for finding the closest value in an array
+  let findDate = d3.bisector( d => d.date ).right;
+
+  activeRegion.on("mousemove", function(evt) {
+    // Update the position as you move
+
+    // Get mouse location
     let location = d3.pointer(evt);
-    console.log(location)
-    
-    // figure out what point is closest to our mouse
-    
-    // update our markers
-    
-  })
+    let x = location[0];
+    // Use "invert" on a scale to go from pixels back to data
+    let xDate = dateScale.invert(x);
+    // We use the bisector to find the index of the element that's closest to our xDate
+    let index = findDate(data, xDate);
+    // We can then get d, the data point that's closest
+    let d = data[index];
+
+    // From there, it's just a matter of updating positions using our scales like we've done for a while now
+    let xPos = dateScale(d['date']);
+    let yPos = carbonScale(d['Carbon Dioxide (ppm)']);
+
+    xMarker.attr("x1",xPos).attr("x2",xPos);
+    valueMarker.attr("cx",xPos).attr("cy",yPos);
+
+    let txt = d['Carbon Dioxide (ppm)']
+
+    // We started with the following line, which has lots of overlaps
+    // label.attr("x",xPos).attr("y",yPos).text(txt); 
+
+    // Here's a simple way to remove overlaps and deliver a consistent user experience
+    label.text(txt); 
+    if (xPos < chartWidth / 2.0) { 
+      label.attr("x",xPos+4).attr("y",100).attr("text-anchor","start");
+    }
+    else { 
+      label.attr("x",xPos-4).attr("y",chartHeight-100).attr("text-anchor","end"); 
+    }
+
+
+  });
   
   
   
