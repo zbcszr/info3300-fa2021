@@ -107,61 +107,60 @@
                   
                   
   // 2.  Create a simple mouseover tooltip area
-  
-  // 2a  Make mouseover container
+  // *** We made this later in the lecture, but put the code here so we can call it easily
+  const mouseover = svg.append("g").attr("class","mouseover")
+                       .attr("transform",`translate(${margin.left+15},${margin.top+15})`);
                        
-  // // Here is a simple technique for figuring out the length of a string
-  // // We add a fake string to our mouseover, use a SVG function to get its length, then remove it
-  // // NOTE: The getComputedTextLength function has limited compatibility on older browsers
-  // function stringLen(str) {
-  //   const dummytext = mouseover.append("text").attr("class","legendtext").attr("visibility","hidden");
-  //   dummytext.text(str)
-  //   let len = dummytext.node().getComputedTextLength()
-  //   dummytext.remove()
-  //   return len;
-  // }
-  // console.log(stringLen("hello world"));
+  // Here is a simple technique for figuring out the length of a string
+  // We add a fake string to our mouseover, use a SVG function to get its length, then remove it
+  // NOTE: The getComputedTextLength function has limited compatibility on older browsers
+  function stringLen(str) {
+    const dummytext = mouseover.append("text").attr("class","legendtext").attr("visibility","hidden");
+    dummytext.text(str)
+    let len = dummytext.node().getComputedTextLength()
+    dummytext.remove()
+    return len;
+  }
+  console.log(stringLen("hello world"));
 
-  // 2b  Make places for text to live
-  
-  
-  // 2c Write a function that updates the mouseover contents given a piece of data
-  // function updateMouseover(d) {
-  //   // In the future it might be better to move the mouseover to a more reasonable location
-  // 
-  //   textbox.html('');  // shorthand to empty out an element
-  // 
-  //   let stateName = `State: ${d['state']}`;
-  //   let result = `Result: ${d['2020resultsimple']}`;
-  //   let diff = `Vote margin: ${d['2020delta']}`;
-  //   let evote = `Electoral votes: ${d['electoralvotes']}`;
-  //   let pop = `2019 population (est): ${format(d['2019population'])}`
-  //   let ppv = `Person per vote: ${format(d['personpervote'])}`
-  // 
-  //   let maxWidth = Math.max( stringLen(stateName), 
-                                // stringLen(result), 
-                                // stringLen(diff), 
-                                // stringLen(evote), 
-                                // stringLen(pop), 
-                                // stringLen(ppv) )
-  //   frame.attr("width", maxWidth+20);
-  // 
-  //   textbox.append("text").text(stateName)
-  //          .attr("x", 0).attr("y", 10);
-  //   textbox.append("text").text(result)
-  //          .attr("x", 0).attr("y", 30);
-  //   textbox.append("text").text(diff)
-  //          .attr("x", 0).attr("y", 50);
-  //   textbox.append("text").text(evote)
-  //          .attr("x", 0).attr("y", 70);
-  //   textbox.append("text").text(pop)
-  //          .attr("x", 0).attr("y", 90);
-  //   textbox.append("text").text(ppv)
-  //          .attr("x", 0).attr("y", 110);
-  // 
-  // }                
+  const frame = mouseover.append("rect").attr("class","frame")
+                         // we style this in <head>
+                         .attr("x", 0).attr("y", 0)
+                         .attr("rx", 5).attr("ry", 5)  // rx and ry round corners
+                         .attr("height", 130);  // set width later
+  const textbox = mouseover.append("g").attr("transform","translate(10,10)");
+  const format = d3.format(',d');  // formatter to make out numbers nicer looking in mouseover
+  // Now write a function that updates the mouseover contents given a piece of data
+  function updateMouseover(d) {
+    // In the future it might be better to move the mouseover to a more reasonable location
 
+    textbox.html('');  // shorthand to empty out an element
+    
+    let stateName = `State: ${d['state']}`;
+    let result = `Result: ${d['2020resultsimple']}`;
+    let diff = `Vote margin: ${d['2020delta']}`;
+    let evote = `Electoral votes: ${d['electoralvotes']}`;
+    let pop = `2019 population (est): ${format(d['2019population'])}`
+    let ppv = `Person per vote: ${format(d['personpervote'])}`
+    
+    let maxWidth = Math.max( stringLen(stateName), stringLen(result), stringLen(diff), stringLen(evote), stringLen(pop), stringLen(ppv) )
+    frame.attr("width", maxWidth+20);
+    
+    textbox.append("text").text(stateName)
+           .attr("x", 0).attr("y", 10);
+    textbox.append("text").text(result)
+           .attr("x", 0).attr("y", 30);
+    textbox.append("text").text(diff)
+           .attr("x", 0).attr("y", 50);
+    textbox.append("text").text(evote)
+           .attr("x", 0).attr("y", 70);
+    textbox.append("text").text(pop)
+           .attr("x", 0).attr("y", 90);
+    textbox.append("text").text(ppv)
+           .attr("x", 0).attr("y", 110);
 
+  }                
+  // END end of lecture stuff
                   
 
 
@@ -177,53 +176,166 @@
   // 1. Make a lollipop chart
   // Let's make some scales
   // Here's a scale for coloring the election outcomes
-  // const outcomeScale = d3.scaleOrdinal().domain(['REPUBLICAN','SWING-REP','SWING-DEM','DEMOCRAT'])
-  //                                       .range( ['#b8351e','#f0d5d1','#d3e0ee','#2369b1'] );
- 
-  // What about person-per-vote?
+  const outcomeScale = d3.scaleOrdinal().domain(['REPUBLICAN','SWING-REP','SWING-DEM','DEMOCRAT'])
+                                        .range( ['#b8351e','#f0d5d1','#d3e0ee','#2369b1'] );
+
+
+  // This is going to be a bit trickier, because we want to put the average in the middle of our y-axis
+  const ppvExtent = d3.extent(data, d => d['personpervote']);
+  const avgPPV = d3.mean(data, d => d['personpervote']);
+  const ppvDist = Math.max( Math.abs(ppvExtent[0] - avgPPV), Math.abs(ppvExtent[1] - avgPPV) );
+  console.log(avgPPV, ppvDist);
+
+  // So we make a new scale that goes the same amount above and below the average value
+  const adjustedPPVExtent = [avgPPV - ppvDist, avgPPV + ppvDist];
+  const ppvScale = d3.scaleLinear().domain(adjustedPPVExtent).range([chartHeight, 0]);
+
+  // We want vertical lines across the X axis. How do we make those?
+  // This is sort of like a scaleBand, but with the bandWidths (rect widths) set to 0
+  // It turns out d3 has scalePoint, which does this for us
+
+  //  First we have to find the 'extent' of different nominal values
+  // BUT! We want to sort these in order of most to least power
+  // We use the *comparator* part of Javascripts built-in array sort to do this (check out the docs)
+  // To make life easier, we use d3's builtin comparison functions within the comparator
+  //     see https://observablehq.com/@d3/d3-ascending
+  data.sort( (a,b) => d3.ascending(a['personpervote'],b['personpervote']) )
+
+  const states = d3.map(data, d => d.stateshort)  // d3.map just runs a function on each item in an array
+  console.log(states)
+  // Now we make the scalePoint
+  const stateScale = d3.scalePoint().domain(states).range([0, chartWidth])
+                                   .padding(0.1);  // padding is the space inwards from the ends
+
+  // Make some axis labels and gridlines the usual way
+  let leftAxis = d3.axisLeft(ppvScale);
+  let leftGridlines = d3.axisLeft(ppvScale)
+                        .tickSize(-chartWidth-10)
+                        .tickFormat("")
+  annotations.append("g")
+             .attr("class", "y axis")
+             .attr("transform",`translate(${margin.left-10},${margin.top})`)
+             .call(leftAxis)
+  annotations.append("g")
+             .attr("class", "y gridlines")
+             .attr("transform",`translate(${margin.left-10},${margin.top})`)
+             .call(leftGridlines);
+  let bottomAxis = d3.axisBottom(stateScale)
+  let bottomAxisG = annotations.append("g")
+                               .attr("class", "x axis")
+                               .attr("transform",`translate(${margin.left},${chartHeight+margin.top+10})`)
+                               .call(bottomAxis);         
+
+
+  // Now add in an average line -- see CSS styles
+  annotations.append("line")
+             .attr("class","avgline")
+             .attr("transform",`translate(${margin.left-10},${margin.top})`)
+             .attr("x1", 0)
+             .attr("x2", chartWidth+10)
+             .attr("y1", ppvScale(avgPPV) )
+             .attr("y2", ppvScale(avgPPV) );
+
+
+  // Now do the data join to make some lollipops!
+  // Since each lollipop has a stick as well as a top, we can't just do .append().append() since that will
+  //  just insert something INSIDE of the thing you just added
+  // Instead, we take advantage of the fact that elements can look at their parents' data if they didn't
+  //  get any themselves from a data join
+  // Here, we use the data join to make G tags for each row of data
+  // We then add the stick and top INSIDE of each G tag, making use of the data stored in the G tag when
+  //  the data join was used to generate them
   
-  
-  
-  
-  // // Make some axis labels and gridlines the usual way
-  // let leftAxis = d3.axisLeft(ppvScale);
-  // let leftGridlines = d3.axisLeft(ppvScale)
-  //                       .tickSize(-chartWidth-10)
-  //                       .tickFormat("")
-  // annotations.append("g")
-  //            .attr("class", "y axis")
-  //            .attr("transform",`translate(${margin.left-10},${margin.top})`)
-  //            .call(leftAxis)
-  // annotations.append("g")
-  //            .attr("class", "y gridlines")
-  //            .attr("transform",`translate(${margin.left-10},${margin.top})`)
-  //            .call(leftGridlines);
-  // let bottomAxis = d3.axisBottom(stateScale)
-  // let bottomAxisG = annotations.append("g")
-  //                              .attr("class", "x axis")
-  //                              .attr("transform",`translate(${margin.left},${chartHeight+margin.top+10})`)
-  //                              .call(bottomAxis);         
-  
-  
-  // 1b. Now make the chart!
-  
-  
-  
+  // Note: This is a one-time join -- to do a fancier one with enter/update/exit, you'd have to be more
+  //   creative with how you construct each G tag, maybe with a enter.each() call instead of our appends
+  //   or a multi-line function for enter => and update =>
+  lollipops = chartArea.selectAll('g.lollipop').data( data, d => d['state'] )
+                       .join('g')
+                       .attr('class','lollipop')
+                       .attr("transform", d => `translate(${Math.floor(stateScale(d['stateshort']))},0)`)
+                          // We use translate here so that we can shift the lollipops around on the x axis
+                          // Doing it this way just makes the code simpler later on so we're not changing
+                          //  all of the different lollipop elements when we want to move them
+                          // * We've added some Math.floor() at a later point to avoid some fuzzy looking lines
+                          
+  // We can still access D because d3 checks up the hierarchy to parent elements
+  lollipops.append("line")
+           .attr("class","stick")
+           .attr("x1", 0 )  // 0 because we have a translate() on the <g> tag for x location
+           .attr("x2", 0 )
+           .attr("y1", ppvScale(avgPPV))
+           .attr("y2", d => ppvScale(d['personpervote']))
+
+  lollipops.append("circle")
+           .attr("class","pop")
+           .attr("r", 8)
+           .attr("fill", d => outcomeScale(d['2020result']))
+           .attr("cx", 0 ) // 0 because we have a translate() on the <g> tag for x location
+           .attr("cy", d => ppvScale(d['personpervote']))
+           
+  // Also make an invisible rect active area for mouseovers
+  lollipops.append("rect")
+           .attr("class", "activeRegion")
+           .attr("x", -10 )
+           .attr("y", d => Math.min( ppvScale(avgPPV), ppvScale(d['personpervote']) ))
+           .attr("height", d => Math.abs( ppvScale(avgPPV) - ppvScale(d['personpervote']) ))
+           .attr("width", 20 );
 
 
   // 2. Add some mouseovers!
 
-  
+  // Now configure the mouseover we made at the top of this script section
+  lollipops.on("mouseover", function(d) {
+    mouseover.attr("visibility","");
+    updateMouseover( d3.select(this).datum() )
+  });
 
-  
-  
+  lollipops.on("mouseout", function() {
+    mouseover.attr("visibility","hidden");
+  });
+
+
 
   // 3. Let's add some custom sorts!
-  
-  
-  
-  
-  
+  //  (Notice that one of the sorts causes a circle to fight our mouseover!
+  //      This is something that should be fixed)
+  // This is a <select> element, which is a subset of <input> elements
+  // All of these elements can send out a "input" or "change" event when the user has adjusted them
+  //  This is just like when we had SVG circles send out "mouseover" and "mouseout" events
+  // In both cases, we can use .on to attach an event listener to listen to these event keywords
+  d3.select("#sort-select").on("change", function() {
+    
+    var option = d3.select(this).property("value")
+    
+    
+    // Based on what option was picked, re-sort the data array and then use it to update the state scale
+    // Because the lollipop G tags know which data Object they map to, they don't care about data's order any more
+    if (option === "sortAlpha") {
+      data.sort( (a,b) => d3.ascending(a['state'],b['state']) )
+    }
+    else if (option === "sortPop") {
+      data.sort( (a,b) => d3.ascending(a['2019population'],b['2019population']) )
+    }
+    else if (option === "sortOut") {
+      data.sort( (a,b) => d3.ascending(a['2020result'],b['2020result']) || d3.ascending(a['personpervote'],b['personpervote'])  )
+    }
+    else {  // sortAsc
+      data.sort( (a,b) => d3.ascending(a['personpervote'],b['personpervote']) )
+    }
+    
+    newStates = d3.map(data, d => d.stateshort)  // d3.map just runs a function on each item in an array
+    // Update axis with the new scales
+    stateScale.domain(newStates);
+    bottomAxis.scale(stateScale);
+    
+    // Then recompute the positions using the new scale  (note that we don't do a data join, just update with .attr )
+    // The .transition() will animate it for us
+    bottomAxisG.transition().call(bottomAxis)
+    lollipops.transition()
+             .attr("transform", d => `translate(${Math.floor(stateScale(d['stateshort']))},0)`)
+              // ...aren't you glad we used a translate on the g tags when we first made the lollipops?
+              //  This saves us from having to move each stick, circle, etc. 
+    })
     
 
   });  
