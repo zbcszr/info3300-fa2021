@@ -1,0 +1,258 @@
+<html><head>
+<title>INFO 3300 - October 4</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+  
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
+  <link rel="stylesheet" href="../css/hljs-base16.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+  
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  
+  <style>
+  
+    .gridlines line {
+      stroke: #bbb;
+    }
+
+    .gridlines .domain {
+      stroke: none;
+    }
+    
+    
+    line.avgline {
+        stroke: black;
+        stroke-width: 2px;
+        stroke-dasharray: 8;
+    }
+    
+    g.lollipop line.stick {
+        stroke: #222;
+        stroke-width: 1px;
+    }
+    g.lollipop circle.pop {
+        stroke: black;
+        stroke-width: 1px;
+    }
+    g.lollipop rect.activeRegion {
+      fill: none;
+      pointer-events: all;
+    }
+    
+    g.mouseover rect {
+      fill: white;
+      stroke: #222;
+      stroke-width: 1px;
+    }
+    g.mouseover text {
+      font-family: Arial, sans-serif;
+    }
+    g.mouseover text:first-child {
+      font-weight: bold;
+    }
+
+  </style>
+
+</head>
+<body>
+  <div class="container larger">
+  <h3>Notes for October 6</h3>
+  <p>
+    Today we'll play with some 2020 election data. We will examine how many individuals in each US state correspond to a single electoral vote in the US Electoral College (a measure of the importance of each person's presidential vote) and add in 2020 results to show whether there are any disparities. Data were sourced from the <a href="https://www.census.gov/data/tables/time-series/demo/popest/2010s-state-total.html">US Census</a> and the <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/42MVDX">MIT Election Lab</a>. There are some serious caveats associated with the "power" measure we're creating. You'll find much better ones online that take into account the fact that in some states a vote is much more likely to "tip" from one candidate to another, regardless of electoral vote count. We're going to do a rough pass and no more than that.
+  </p>
+  <p>
+    To do this, we'll make a <a href="https://towardsdatascience.com/lollipop-charts-2f748b90f6f0">lollipop chart</a> inspired by a past INFO4310 project. These charts are a bit controversial because the "lollipop" end has a center that's hard to discern compared to a bar. On the other hand, we're going to have 51 vertical items, so a bar chart would be quite... intense visually.
+  </p>
+  <p>
+    As a part of this process, we'll push data joins a little bit further and add some interactivity.
+  </p>
+
+  <h5>HTML for today:</h5>
+  
+  <div id="pulldown-bar">
+  <select id="sort-select" style="width:260px;">
+    <option value="sortAsc" selected>Sort by person-per-electoral-vote</option>
+    <option value="sortAlpha">Sort alphabetically</option>
+    <option value="sortPop">Sort by population</option>
+    <option value="sortOut">Sort by outcome</option>
+  </select>
+  </div>
+  <svg id="chart" height="500" width="1200" style="margin-top:20px" >
+  </svg>
+
+  <!-- This block will be automatically filled with syntax-highlighted code from the script below -->
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display1" class="hljs javascript">
+    </code>
+  </pre>
+
+  <!--- Code for today's class --->
+  <script id="notes1">
+  
+  // Do the usual things to set up the chart area and incorporate margins
+  const svg = d3.select("svg#chart");
+  const width = svg.attr("width");
+  const height = svg.attr("height");
+  const margin = {top: 10, right: 10, bottom: 30, left: 60};
+  const chartWidth = width - margin.left - margin.right;
+  const chartHeight = height - margin.top - margin.bottom;
+
+  let annotations = svg.append("g").attr("id","annotations");
+  let chartArea = svg.append("g").attr("id","points")
+                  .attr("transform",`translate(${margin.left},${margin.top})`);
+                  
+                  
+  // 2.  Create a simple mouseover tooltip area
+  
+  // 2a  Make mouseover container
+                       
+  // // Here is a simple technique for figuring out the length of a string
+  // // We add a fake string to our mouseover, use a SVG function to get its length, then remove it
+  // // NOTE: The getComputedTextLength function has limited compatibility on older browsers
+  // function stringLen(str) {
+  //   const dummytext = mouseover.append("text").attr("class","legendtext").attr("visibility","hidden");
+  //   dummytext.text(str)
+  //   let len = dummytext.node().getComputedTextLength()
+  //   dummytext.remove()
+  //   return len;
+  // }
+  // console.log(stringLen("hello world"));
+
+  // 2b  Make places for text to live
+  
+  
+  // 2c Write a function that updates the mouseover contents given a piece of data
+  // function updateMouseover(d) {
+  //   // In the future it might be better to move the mouseover to a more reasonable location
+  // 
+  //   textbox.html('');  // shorthand to empty out an element
+  // 
+  //   let stateName = `State: ${d['state']}`;
+  //   let result = `Result: ${d['2020resultsimple']}`;
+  //   let diff = `Vote margin: ${d['2020delta']}`;
+  //   let evote = `Electoral votes: ${d['electoralvotes']}`;
+  //   let pop = `2019 population (est): ${format(d['2019population'])}`
+  //   let ppv = `Person per vote: ${format(d['personpervote'])}`
+  // 
+  //   let maxWidth = Math.max( stringLen(stateName), 
+                                // stringLen(result), 
+                                // stringLen(diff), 
+                                // stringLen(evote), 
+                                // stringLen(pop), 
+                                // stringLen(ppv) )
+  //   frame.attr("width", maxWidth+20);
+  // 
+  //   textbox.append("text").text(stateName)
+  //          .attr("x", 0).attr("y", 10);
+  //   textbox.append("text").text(result)
+  //          .attr("x", 0).attr("y", 30);
+  //   textbox.append("text").text(diff)
+  //          .attr("x", 0).attr("y", 50);
+  //   textbox.append("text").text(evote)
+  //          .attr("x", 0).attr("y", 70);
+  //   textbox.append("text").text(pop)
+  //          .attr("x", 0).attr("y", 90);
+  //   textbox.append("text").text(ppv)
+  //          .attr("x", 0).attr("y", 110);
+  // 
+  // }                
+
+
+                  
+
+
+
+  // Import some CSV data
+  d3.csv("../datasets/2020-election.csv", d3.autoType)
+    .then( (data) => {
+      
+  // Check for data quality!
+  console.log(data);
+  // Looks like d3.autoType worked okay
+
+  // 1. Make a lollipop chart
+  // Let's make some scales
+  // Here's a scale for coloring the election outcomes
+  // const outcomeScale = d3.scaleOrdinal().domain(['REPUBLICAN','SWING-REP','SWING-DEM','DEMOCRAT'])
+  //                                       .range( ['#b8351e','#f0d5d1','#d3e0ee','#2369b1'] );
+ 
+  // What about person-per-vote?
+  
+  
+  
+  
+  // // Make some axis labels and gridlines the usual way
+  // let leftAxis = d3.axisLeft(ppvScale);
+  // let leftGridlines = d3.axisLeft(ppvScale)
+  //                       .tickSize(-chartWidth-10)
+  //                       .tickFormat("")
+  // annotations.append("g")
+  //            .attr("class", "y axis")
+  //            .attr("transform",`translate(${margin.left-10},${margin.top})`)
+  //            .call(leftAxis)
+  // annotations.append("g")
+  //            .attr("class", "y gridlines")
+  //            .attr("transform",`translate(${margin.left-10},${margin.top})`)
+  //            .call(leftGridlines);
+  // let bottomAxis = d3.axisBottom(stateScale)
+  // let bottomAxisG = annotations.append("g")
+  //                              .attr("class", "x axis")
+  //                              .attr("transform",`translate(${margin.left},${chartHeight+margin.top+10})`)
+  //                              .call(bottomAxis);         
+  
+  
+  // 1b. Now make the chart!
+  
+  
+  
+
+
+  // 2. Add some mouseovers!
+
+  
+
+  
+  
+
+  // 3. Let's add some custom sorts!
+  
+  
+  
+  
+  
+    
+
+  });  
+  
+  
+  </script>
+  
+  
+  
+  
+  
+  
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  
+  function sanitize(s) {
+    return s.replace("<br>", "\\n")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+          }
+    document.getElementById("display1").innerHTML = sanitize( document.getElementById("notes1").innerText);
+    hljs.highlightAll();
+  </script>
+
+
+  </div>
+</body>
+</html>
