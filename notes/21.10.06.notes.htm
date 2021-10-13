@@ -299,8 +299,46 @@
   // 3. Let's add some custom sorts!
   //  (Notice that one of the sorts causes a circle to fight our mouseover!
   //      This is something that should be fixed)
-  
-  
+  // This is a <select> element, which is a subset of <input> elements
+  // All of these elements can send out a "input" or "change" event when the user has adjusted them
+  //  This is just like when we had SVG circles send out "mouseover" and "mouseout" events
+  // In both cases, we can use .on to attach an event listener to listen to these event keywords
+  d3.select("#sort-select").on("change", function() {
+    
+    var option = d3.select(this).property("value")
+    
+    
+    // Based on what option was picked, re-sort the data array and then use it to update the state scale
+    // Because the lollipop G tags know which data Object they map to, they don't care about data's order any more!
+    //  (This is because we included d => d['state'] as a second parameter in .data() )
+    if (option === "sortAlpha") {
+      data.sort( (a,b) => d3.ascending(a['state'],b['state']) )
+    }
+    else if (option === "sortPop") {
+      data.sort( (a,b) => d3.ascending(a['2019population'],b['2019population']) )
+    }
+    else if (option === "sortOut") {
+      data.sort( (a,b) => d3.ascending(a['2020result'],b['2020result']) || d3.ascending(a['personpervote'],b['personpervote'])  )
+    }
+    else {  // sortAsc
+      data.sort( (a,b) => d3.ascending(a['personpervote'],b['personpervote']) )
+    }
+    
+    newStates = d3.map(data, d => d.stateshort)  // d3.map just runs a function on each item in an array
+    // Update axis with the new scales
+    stateScale.domain(newStates);
+    bottomAxis.scale(stateScale);
+    
+    // Then recompute the positions using the new scale  (note that we don't do a data join, just update with .attr )
+    // The .transition() will animate it for us
+    bottomAxisG.transition().call(bottomAxis)
+    lollipops.transition()
+             .attr("transform", d => `translate(${Math.floor(stateScale(d['stateshort']))},0)`)
+              // ...aren't you glad we used a translate on the g tags when we first made the lollipops?
+              //  This saves us from having to move each stick, circle, etc. 
+              
+              // Always think ahead when animating so that you can package things up in G tags that are easy to animate
+    }) 
 
 
 

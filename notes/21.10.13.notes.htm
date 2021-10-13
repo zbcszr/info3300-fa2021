@@ -70,22 +70,38 @@
                   
   // 0. Let's explore a new way to use promises for data imports that might be a bit cleaner when importing lots of files
   
+  // First, create an anonymous function with the async keyword and assign it to a variable 
+  // This creates a function that returns a promise (meaning it is run `asynchronously`)
+  // Try leaving out the async -- you'll see the change in what line 81 prints
+  const testFunc = async function() {
   
+    return "Hello" ;
+    
+  }
+  console.log( testFunc() );
   
+  // We use async functions because they give access to *await* which can make code a lot easier to read
+  // See docs here: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function
   
+  // * Start by making an anonymous async function which will contain most or all of your code *
+  // * Make sure to run the function after you make it (see bottom of file) *
+  // *** If it seems like nothing is happening, make sure you are running it ***
+  // * Then use await instead of .then()  -- see line 98
   
   // 1. An async function to load data and build the map
-  
+  const requestData = async function() {
   
     // 2. Draw a map of US using topoJSON
     // 2a. Import data as synchronous call to topoJSON data file
     // Care of Mike Bostock:
     //   "../datasets/us-smaller.json"
-    
+    const us = await d3.json("../datasets/us-smaller.json");
+    console.log(us);
+    // Here *await* is waiting for the promise from d3.json to finish, then assigning the result to const us
+    // In practice you should always do error handling -- see the docs linked above for details
     
   
     // 2b. Pick out topographic features and build d3 helpers
-    
     
     
     
@@ -171,9 +187,9 @@
     
     
     
-    
+  }
   // END OF REQUESTDATA()
-  
+  requestData();
   
   
   
