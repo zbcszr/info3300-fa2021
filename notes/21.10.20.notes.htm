@@ -15,6 +15,11 @@
   
   <style>
   
+  .neighborhood {
+    fill: #eee;
+    stroke: white;
+    stroke-width: 2px;
+  }
 
   </style>
 
@@ -66,10 +71,60 @@
   //  "../datasets/Street_Tree_List_smaller.csv"
 
 
-  // 1. Make the visualization  
-  
-  
-  
+  // 1. Make the visualization
+  //  (refer to 10/13 notes for more comments on async functions)
+  const requestData = async function() {
+    
+    const sf = await d3.json("../datasets/SF-Neighborhoods.json");
+    console.log(sf);
+    
+    // We find that the feature we want to visualize is the SFNeighborhoods property within objects
+    //  Always search .objects for different features to show in a topoJSON dataset
+    var neighborhoods = topojson.feature(sf, sf.objects.SFNeighborhoods);
+    
+    // We use Mercator projection instead of a "better" projection because it's more familiar
+    // It also leads to a flat line on the bottom of the city due to how the projection makes all
+    //  latitude lines flat (which allows rhumb line equivalency)
+    var projection = d3.geoMercator().fitSize([mapWidth, mapHeight], neighborhoods);
+    var path = d3.geoPath().projection(projection);
+    
+    // Draw neighborhoods
+    // Just as in our line generators, the scale is used by the generator to take complex data and
+    //  generate fancy paths
+    map.selectAll("path.neighborhood").data(neighborhoods.features)
+      .join("path")
+      .attr("class", "neighborhood")
+      .attr("d", path);
+      
+      
+    // Import tree dataset
+    const trees = await d3.csv("../datasets/Street_Tree_List_smaller.csv");
+    
+    // We need to figure out where to position the dots. Since we may have a lot of them, let's process
+    //  the data ahead of time and add to our dict
+    trees.forEach( d => {
+      
+      // Use the projection just like a scale to convert from lng/lat to pixels
+      // Make ABSOLUTELY SURE to use longitude, latitude order here -- reversing them gives weird results
+      d.Position = projection( [d.Longitude, d.Latitude] );
+      
+    });
+    // (Specifically: if we instead did this during the join then we would have to call projection() twice, 
+    //     once for 'cx' and once for 'cy')
+    
+    // Draw circles using the Positions we just made
+    map.selectAll("circle").data(trees)
+       .join("circle")
+       .attr("r", 1)
+       .attr("fill", "forestgreen")
+       .attr("opacity", 0.4)
+       .attr("cx", d => d.Position[0])
+       .attr("cy", d => d.Position[1]);
+    
+    
+    
+  }
+  requestData();
   
   
   </script>
