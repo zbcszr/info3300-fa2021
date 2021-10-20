@@ -161,7 +161,7 @@
   
     // This scale wasn't great because it crunched most of the points to the bottom 3rd of the color scale
     //  3 state outliers with high values mean it is very distorted
-    // const colorScale = d3.scaleSequential(d3.interpolateGnBu).domain(minMax);
+    const colorScale = d3.scaleSequential(d3.interpolateGnBu).domain(minMax);
   
     // Next, we try quantize, which splits the domain into bins
     // In general, it splits it into as many bins as you provide items in the range
@@ -176,9 +176,9 @@
     //  ...because it needs to inspect *all of the values* in order to see the point *distribution*
     //  we use Object.values() here to get all of the values out of the stateCounts dictionary
   
-    const colorScale = d3.scaleQuantile()
-                         .domain(Object.values(stateIdCounts))
-                         .range(["#fff","#d1e8ed","#adc2da","#8879b3","#762b80"]);
+    // const colorScale = d3.scaleQuantile()
+    //                      .domain(Object.values(stateIdCounts))
+    //                      .range(["#fff","#d1e8ed","#adc2da","#8879b3","#762b80"]);
   
   
      // //  If you want to use a log scale instead of a linear quantile (which might work better):
@@ -203,7 +203,6 @@
     drawLegend(d3.select("#colorLegend"), colorScale);
   
     
-    // for later: 
   
     // 4. Add a tooltip that "sticks" below the state
   

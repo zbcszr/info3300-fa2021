@@ -1,0 +1,96 @@
+<html><head>
+<title>INFO 3300 - October 20</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+  
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
+  <link rel="stylesheet" href="../css/hljs-base16.css">
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+  
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/topojson.v3.min.js"></script>
+  
+  <style>
+  
+
+  </style>
+
+</head>
+<body>
+  <div class="container larger">
+  <h3>Notes for October 20</h3>
+  <p>
+    Today's data (both geoJSON and CSV) comes from the <a href="https://datasf.org/opendata/">DataSF</a> municipal open data initiative. I used <a href="https://mapshaper.org/">mapShaper</a> to convert the geoJSON file into a topoJSON file, which is much smaller.
+  </p>
+  <p>
+    More on <a href="https://github.com/d3/d3-geo">d3.geo</a> and its <a href="https://github.com/d3/d3-geo#azimuthal-projections">geographic projections</a>.
+  </p>
+
+  <h5>HTML for today:</h5>
+
+  <svg id="points" height="900" width="900" style="background: #fff; margin-top:50px" >
+
+  </svg>
+  
+  
+
+  <!-- This block will be automatically filled with syntax-highlighted code from the script below -->
+  <h5>Code for today:</h5>
+  <pre>
+    <code id="display1" class="hljs javascript">
+    </code>
+  </pre>
+
+
+  <!--- Code for today's class --->
+  <script id="notes1">
+
+  const svg = d3.select("#points");
+  const width = svg.attr("width");
+  const height = svg.attr("height");
+  const margin = { top: 20, right: 20, bottom: 20, left:20};
+  const mapWidth = width - margin.left - margin.right;
+  const mapHeight = height - margin.top - margin.bottom;
+  const map = svg.append("g")
+                  .attr("transform","translate("+margin.left+","+margin.top+")");
+
+  // Let's make a map of all of the municipal trees in San Francisco
+  // With any luck, we ought to be able to visualize the streets/blocks in the city, since trees line them
+  //   (this is really just an excuse to make a lot of dots)
+  
+  // Datasets for today:
+  //  "../datasets/SF-Neighborhoods.json"
+  //  "../datasets/Street_Tree_List_smaller.csv"
+
+
+  // 1. Make the visualization  
+  
+  
+  
+  
+  
+  </script>
+  
+
+  <!--- calls the highlight library to fill the <pre> tag with code --->
+  <script>
+  
+  function sanitize(s) {
+    return s.replace("<br>", "\\n")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+          }
+    document.getElementById("display1").innerHTML = sanitize( document.getElementById("notes1").innerText);
+    hljs.highlightAll();
+  </script>
+
+
+  </div>
+</body>
+</html>
