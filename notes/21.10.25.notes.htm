@@ -121,16 +121,54 @@
 
 
     
-    // 1. PAN/ZOOM BEGINS HERE
+    // PAN/ZOOM BEGINS HERE
 
-    chartArea.selectAll("circle.point").data(data)
-             .join("circle").attr("class","point")
-             .attr("cx", d => xScale(d['gdp']))
-             .attr("cy", d => yScale(d['life']))
-             .attr("r", d => popScale(d['pop']))
-             .attr("opacity", 0.8)
-             .style("fill", d => regScale(d.Region));
+    let viewport = chartArea.append("g");
+    viewport.selectAll("circle.point").data(data)
+       .join("circle").attr("class","point")
+           .attr("cx", d => xScale(d['gdp']))
+           .attr("cy", d => yScale(d['life']))
+           .attr("r", d => popScale(d['pop']))
+           .attr("opacity", 0.8)
+           .style("fill", d => regScale(d.Region));
     
+    var plotZoom = d3.zoom().on("zoom", plotZoomed);
+    
+    plot.call(plotZoom);
+    
+    
+    // As with other events, plotZoomed receives one parameter, *event*  (i.e. plotZoomed(event)  ) and can get *this*
+    function plotZoomed(event) {    
+
+      console.log(event.transform);
+      console.log(event.transform.toString());
+      
+      viewport.attr("transform", event.transform);
+
+      // update the scales on the axes/gridlines
+      // rescale does not modify the source scale
+      yAxis.scale(event.transform.rescaleY(yScale))
+      xAxis.scale(event.transform.rescaleX(xScale))
+      yGridlines.scale(event.transform.rescaleY(yScale))
+      xGridlines.scale(event.transform.rescaleX(xScale))
+
+      // apply new scaled axes (no need for transition since zoom triggers so many events)
+      d3.select("g.y.axis").call(yAxis);
+      d3.select("g.x.axis").call(xAxis);
+      d3.select("g.y.gridlines").call(yGridlines);
+      d3.select("g.x.gridlines").call(xGridlines);
+   }
+
+   // get rid of circles all over the place with a clip-path
+   // region that is "filled" within the <clipPath> will stay, pixels outside of it will be deleted
+   plot.append("defs").append("clipPath")
+                    .attr("id","chartClip")
+                    .append("rect").attr("x",0)
+                                   .attr("y",0)
+                                   .attr("width",chartWidth)
+                                   .attr("height",chartHeight);
+
+   chartArea.attr("clip-path","url(#chartClip)");
     
     
 
@@ -143,7 +181,7 @@
   const drawMap = async () => {
     
     const us = await d3.json("../datasets/us.json");
-    let filteredStates = ['2','02','15','60','66','69','72','74','78'];
+    let filteredStates = ['02','15','60','66','69','72','74','78'];
     us.objects.states.geometries = us.objects.states.geometries.filter( d => {
                           return filteredStates.indexOf( d.id.toString().padStart(2,'0')  ) === -1;
                         });
@@ -160,7 +198,7 @@
     let path = d3.geoPath().projection(projection);
     let viewport = map.append("g");
 
-    // Add paths for everything
+    // Add paths for everything, counties start hidden
     // GRATICULE
     viewport.append("path")
         .attr("class","graticule")
@@ -190,7 +228,99 @@
 
 
 
-    // 2. PAN AND ZOOM STARTS HERE
+    // PAN AND ZOOM HERE
+    
+    var zoom = d3.zoom()
+                  .scaleExtent([1,10])
+                  //.translateExtent([[-50,-50],[mapWidth+50,mapHeight+50]])  // to lock to edges
+                  .on("zoom", mapZoomed);
+
+    map.call(zoom);
+
+    // It's a good habit to manually call a zoom interaction just in case you have code in zoomed() which you need 
+    //  to execute before the user plays with the map (e.g. showing/hiding counties).
+    // You can feed it zoomIdentity, which is the zoom state in which nothing has changed
+    map.call(zoom.transform, d3.zoomIdentity); // Executes zoomed() once because we technically have changed the transform
+
+    
+    
+    // This time we're using *destructuring assignments* to directly get the values we need
+    // Check out these docs: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment
+    function mapZoomed({transform}) {       // Destructuring here directly pulls and assigns the transform
+                                            //    key from the *event* parameter, since we only need that one
+
+      // Transform the group object to reflect the zoom action
+      viewport.attr("transform", transform.toString() );
+      // NOTE: we could also instead adjust projection and path to account for the zoom
+      //  However, projections can be time-consuming to calculate, leading to laggy interactions
+      //  For some projections like orthographic, you need to recompute the projection to deliver a
+      //   consistent user experience (e.g. adjust lambda for the projection to rotate the globe)
+
+      // Divide by scale to make sure strokes remain a consistent width during zooming
+      viewport.select(".state-outline")
+                  .style("stroke-width", 2 / transform.k);
+      viewport.select(".county-outline")
+                  .style("stroke-width", 1 / transform.k);
+
+      // Expose county layer when sufficiently zoomed
+      viewport.select(".county-outline")
+                .attr("visibility", (transform.k > 3) ? "visible" : "hidden");
+      viewport.selectAll(".county")
+                .attr("visibility", (transform.k > 3) ? "visible" : "hidden");
+      // We can't animate the Visibility attribute -- also probably not a good thing to animate anyways
+      //  You could chain an animation on opacity with an .end() promise of setting the visibility attribute
+      //  There would likely be some lag or skipping due to repeated events during the animation trigger
+      
+      // See below for why I use visibility rather than opacity
+
+      // OK, Zoomer
+
+    }
+
+
+    // BONUS: Click on a state/county to zoom in on it!
+    viewport.selectAll(".state").on("click",clicked);
+    viewport.selectAll(".county").on("click",clicked);
+    
+    // Opacity=0 means items are still technically onscreen. If we just use opacity then the counties
+    //  prevent the states from getting click events, leading to very confusing interactions.
+    // This is why "visibility" is used in the code above
+
+    function clicked(event, d) {
+      console.log(d)
+
+      // geoPath generators have a few extra functions. .bounds returns a pixel rectangle bounding the shape you give it
+      let bounds = path.bounds(d.geometry); // get bounds for clicked state/county
+      let dx = bounds[1][0] - bounds[0][0]; // width of state/county
+      let dy = bounds[1][1] - bounds[0][1]; // height of state/county
+      let x = (bounds[0][0] + bounds[1][0]) / 2; // center x of state/county
+      let y = (bounds[0][1] + bounds[1][1]) / 2; // center y of state/county
+
+      // We want to make sure scale is within 1-10 when we click, so things don't zoom too far or too little
+      // To compute zoom, we want to make sure the bounding box "just" fits onscreen.
+      // dx / mapWidth gets us the portion of the screen the shape takes up without any zoom at all
+      //  the lower dx/mapWidth is, the more we need to zoom because the shape is smaller
+      // We find the max of dx/mapWidth, dy/mapHeight because we don't want to zoom farther (smaller values need more zoom)
+      // We do 1 or 0.9 divided by dx/mapWidth because we need larger numbers to zoom in. 0.9 allows us to pad things a bit
+      let scale = Math.max(1, Math.min(10, 0.9 / Math.max( dx / mapWidth, 
+                                                           dy / mapHeight )));
+
+      // Think of the translate like a delta describing how much we need to move the map to move a point to a desired position
+      // Simplistically, it works like (desired position) - (current position) = (translation)
+      // In this case mapWidth/2, the center of the screen is the desired place for our viewport
+      // x*scale is the position we want to move to the center (scale is there because we need to move more when zoomed in)
+      let translate = [mapWidth / 2 - x * scale, mapHeight / 2 - y * scale];
+
+      // It's hard to programmatically adjust a zoom. The best way is to take the Identity (zoom transform where nothing is changed)
+      //  and then modify it using a .translate and .scale
+      let newTransform = d3.zoomIdentity
+                            .translate(translate[0],translate[1])
+                            .scale(scale);
+      // We can apply a new transform to the screen by using .call(zoom.tranform, newTransform)
+      // This is kinda the same thing as running zoom.transform(newTransform), but the chaining with .call allows us to add an animation
+      map.transition().duration(1000).call(zoom.transform, newTransform);
+
+    }
     
     
     
@@ -200,11 +330,6 @@
   drawMap();
 
 
-
-
-
-  
-  
   </script>
   
   
