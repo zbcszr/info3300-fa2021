@@ -132,7 +132,9 @@
        .join("path")
        .attr("class", "state")
        .attr("note", d => d.id)  // debugging
-       .attr("d", path);
+       .attr("d", path)
+       .on('mouseover', mouseEntersPlot )
+       .on('mouseout', mouseLeavesPlot );
   
     map.append("path").datum(statesMesh)
        .attr("class","outline")
@@ -203,49 +205,113 @@
     drawLegend(d3.select("#colorLegend"), colorScale);
   
     
-    // for later: 
   
     // 4. Add a tooltip that "sticks" below the state
+    let tooltipWidth = 120;
+    let tooltipHeight = 40;
+    
+    
+    // At the end of lecture segment, we added this code to do the mouseover outline the "proper" way
+    let momesh =  map.append("path")
+                     .attr("class","mouseover outline")
+                     .attr("d", "");
   
+    // Stub code to draw the tooltip - we use an SVG element here
+    // You can use an absolute-positioned HTML element, but the positioning requires some more work
+    // Instead, we make something centered at (0,0) and then later use translate() to move it
+    //  (this is why the x position for the rect is -tooltipWidth/2.0  -- so it's centered on 0 )
+    let tooltip = map.append("g")
+                     .attr("class","tooltip")
+                     .attr("visibility","hidden");
+    tooltip.append("rect")
+           .attr("fill", "black")
+           .attr("opacity", 0.9)
+           .attr("x", -tooltipWidth / 2.0)
+           .attr("y", 0)
+           .attr("width",tooltipWidth)
+           .attr("height",tooltipHeight)
+    let txt = tooltip.append("text")
+                     .attr("fill", "white")
+                     .attr("text-anchor","middle")
+                     .attr("alignment-baseline","hanging")
+                     .attr("x", 0)
+                     .attr("y", 2);
+    let txt2 = tooltip.append("text")
+                     .attr("fill", "white")
+                     .attr("text-anchor","middle")
+                     .attr("alignment-baseline","hanging")
+                     .attr("x", 0)
+                     .attr("y", 22);
+    
+    
+                     
   
-    // // Stub code to draw the tooltip - we use an SVG element here
-    // // You can use an absolute-positioned HTML element, but the positioning requires some more work
-    // // Instead, we make something centered at (0,0) and then later use translate() to move it
-    // //  (this is why the x position for the rect is -tooltipWidth/2.0  -- so it's centered on 0 )
-    // let tooltip = map.append("g")
-    //                  .attr("class","tooltip")
-    //                  .attr("visibility","hidden");
-    // tooltip.append("rect")
-    //        .attr("fill", "black")
-    //        .attr("opacity", 0.9)
-    //        .attr("x", -tooltipWidth / 2.0)
-    //        .attr("y", 0)
-    //        .attr("width",tooltipWidth)
-    //        .attr("height",tooltipHeight)
-    // let txt = tooltip.append("text")
-    //                  .attr("fill", "white")
-    //                  .attr("text-anchor","middle")
-    //                  .attr("alignment-baseline","hanging")
-    //                  .attr("x", 0)
-    //                  .attr("y", 2);
-    // let txt2 = tooltip.append("text")
-    //                  .attr("fill", "white")
-    //                  .attr("text-anchor","middle")
-    //                  .attr("alignment-baseline","hanging")
-    //                  .attr("x", 0)
-    //                  .attr("y", 22);
-    
-    
-    
+    d3.selectAll(".state").on("mouseenter", mouseEntersPlot);
+    d3.selectAll(".state").on("mouseout",  mouseLeavesPlot);
   
     function mouseEntersPlot() {
+      // Make tooltip visible
+      tooltip.style("visibility","visible")
+  
+      // Find the state SVG element and add stroke
+      let state = d3.select(this);
+      
+      // // Original version
+      // state.attr("stroke","black")
+      //      .attr("stroke-width", 3);
+      
+      // Using .datum() to recover the data for the state element (because we used a .join() to make it)...
+      // ... get the name of the state and count
+      let stateID = state.datum().id;
+      console.log(state.datum())
+      
+      txt.text(stateIdNames[ stateID ]);
+      txt2.text(stateIdCounts[  stateID  ]);
+      
+      // You can use the geoPath() generator to do all sorts of helpful things 
+      // let centroid = path.centroid( state.datum() );  // Get the pixel "center" of the state
+      let bounds = path.bounds( state.datum() );   // Get the pixel boundaries of the state
+      // In both cases here, the geoPath() is parsing the fancy topoJSON data to figure out pixels using the projection
+      
+      // Place it at the bottom of the state, centered
+      let xPos = (bounds[0][0]+bounds[1][0])/2.0;
+      let yPos = bounds[1][1] - 15;
+      
+      // Transform the <g> group so that everything moves together easily
+      tooltip.attr("transform",`translate(${xPos},${yPos})`);
+      
+      // To fix the oscillation, we add this in the CSS for .mouseover
+      //  pointer-events: none;
+      
+      // Technically, the right way to do this is with another mesh for some complicated reasons
+      //  You have to use the second parameter of topojson.mesh() to pick out this state's boundaries
+      // At the end of the lecture we tried this out
+      //  First, make a new mesh with a filter for only borders of the current state
+      var mo = topojson.mesh(us, us.objects.states, function(a, b) { return a.id === stateID || b.id === stateID; });
+      //  Then apply it to your special mesh that's on top of everything else
+      momesh.datum(mo).attr("d", path)
+      
+      
+      
+  
     }
   
     function mouseLeavesPlot() {
+  
+     // Hide when you leave a state
+     tooltip.style("visibility","hidden");
+  
+     let state = d3.select(this);
+     
+     // Reset old style mouseover stroke
+     // state.attr("stroke","none")
+     //      .attr("stroke-width", 0);
+     // }
+  
+     // Here we are hiding the mouseover mesh we added at the end of the lecture
+     momesh.attr("d", "");
+  
     }
-    
-    
-    
     
     
   }
