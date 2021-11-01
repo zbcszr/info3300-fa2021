@@ -185,6 +185,67 @@
       
       
       //   Now to add mouseovers to highlight points
+      // The issue here is that unlike in SVG, where we can attach an event to EACH circle element
+      // In a canvas, we just have pixels and can't really test which circle is which
+      // So we need to do more to figure out which circle is under the mouse when its at a given place
+      // One easy way to do this is to keep an array that maps pixel indices to pixel positions
+      //  (i.e. an array that's width x height in size and contains data[i] for the circle at array[x][y])
+      
+      // A nicer way to handle mouseovers might be to just find the circle that's closest to your mouse
+      //  This will produce results that are very similar to that of Bubble Cursor
+      // However, to find the closest point, you've got to compare your current positon with EVERY other point
+      //  For 10,000 points, that's incredibly inefficient
+      
+      // To make the "find the closest point" task more efficient, we'll use a Delaunay Triangulation
+      //  In effect, this does a bit of pre-computation for us, so that lookups are much faster
+      // This makes use of the d3-delaunay library, which has an efficient implementation
+      //  of the delaunay triangulation algorithm -- it's just a bit tricky to get working
+      // If you've seen a Voronoi Diagram, this is kind of the same thing
+      // (Another way to speed up the "closest point" task would be a quadtree like data structure, which
+      //  d3 also offers in a library for us)
+      
+      // First make a delaunay triangulation
+      // The .from function works kind of like .x and .y, just give it accessor functions for x and y
+      const delaunay = d3.Delaunay.from(data, d => xScale(d['year_published']), d => yScale(d['average_rating']));
+      
+      // // We can use a voronoi tesselation to see the structure of the triangulation
+      // // You'll be able to see the cells that the triangulation "searches" when using .find()
+      // // UNCOMMENT FOLLOWING 2 LINES TO SEE CELLS
+      // const voronoi = delaunay.voronoi([0,0,chartWidth,chartHeight]);
+      // interactiveArea.append("path").attr("stroke","black").attr("fill","none")
+      //                .attr("d",voronoi.render())
+      
+
+      // Since we don't have events for each circle, we need to simulate mouseOver and mouseOut
+      // We'll make a little state machine to do this
+      let currentTarget = -1;
+      interactiveArea.on("mousemove", function(event) {
+
+        let loc = d3.pointer(event);
+        let index;
+        if (currentTarget === -1) {
+          // Does a sweep of triangles, which should be O(sqrt(N)) in most cases
+          index = delaunay.find(loc[0],loc[1]);   // returns index of closest point
+        }
+        else {
+          // With a known point index that's nearby, you can speed up the lookups dramatically
+          index = delaunay.find(loc[0],loc[1],currentTarget)
+        }
+        // console.log(loc, index);
+
+        if (index !== currentTarget) {
+           // Make our "mouseover" function
+           console.log("mouseover");
+           currentTarget = index;
+           mouseExited();
+           mouseEntered(index);
+        }
+      });
+      // Also trigger "mouseout" when leaving interactive area
+      interactiveArea.on("mouseout", () => {
+        currentTarget = -1;
+        mouseExited(); 
+      })
 
 
       function mouseEntered(i) {
