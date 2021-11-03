@@ -1,0 +1,110 @@
+<html>
+<head>
+  <title>INFO 3300 - Interaction Brainstorm Activity</title>
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Raleway:400,700" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="../css/normalize.css">
+  <link rel="stylesheet" type="text/css" href="../css/skeleton.css">
+  <link rel="stylesheet" type="text/css" href="../css/custom-style.css">
+  <meta charset="utf-8">
+</head>
+<body class="larger-font">
+  <div class="container larger">
+    <h4>INFO 3300 - Interaction Brainstorm Activity</h4>
+    
+    <div class="doc-section">
+      <h5 style="padding-top:0;">Instructions</h5>
+      <p>
+        Your group will brainstorm interactive data tools that employees of an e-commerce startup will use to explore sales data. Here are the rules:
+        <ul>
+          <li>Effectively visualize some aspect of the dataset for users. You will not be able to visualize everything. You are not required to show all of the data, but data related to time must be a component of your final design.</li>
+          <li>Focus on the interactions in the interface. How will users get an overview? How will they "zoom in" to see more details? How do they backtrack or remember where they have been? Can you go beyond filtering and incorporate new interactions we haven't seen before? How do you avoid recreating a traditional "product list + search" page?</li>
+          <li>Your final design concept should include <strong>at least 3 specific interactive elements</strong>.</li>
+          <li>Consider how best to manage the information that a user sees. Don't try to throw everything at the problem. Instead, be cautious in how you include new visual elements and interactions. <strong>You should be able to justify every design decision you make</strong>.</li>
+          <li>Note that you may design for mobile multi-touch devices or traditional desktop platforms. Pick one as a group.</li>
+        </ul> 
+      </p>
+      <p>
+        Please follow this procedure:
+      </p>
+        <strong>Step 1 - 7 minutes - [GROUP] Identify Key Goals</strong>
+        <ol class="narrow-list">
+          <li>As a group, read the instructions and <strong>Brief</strong> included below.</li>
+          <li>Together, take a look at the <strong>Example use cases</strong>. Choose <strong>one existing example</strong> or <strong>invent a new use</strong> case that you want to support through your visualization tool.</li>
+          <li>Rank those tasks in order of importance using any method you'd like (e.g. voting, by consensus)</li>
+          <li>In any remaining time, check out some of the visualizations <a href="https://edstem.org/us/courses/8936/discussion/?category=Visualization%20Examples">posted to Ed Discussion</a> and your favorite existing e-commerce sites for inspiration.</li>
+        </ol>
+        <br/>
+        <strong>Step 2 - 10 minutes - [INDIVIDUAL] Two sketches</strong>
+        <ol class="narrow-list">
+          <li>Now, working individually, begin making <strong>two very rough visualization sketches</strong> that best satisfy those tasks. Keep them low fidelity. You can use any medium you like (e.g.pen and paper, tablets, UI prototyping software, presentation tools, a whiteboard).</li>
+          <li>Refer back to the <strong>dataset</strong> and think about what you want to show.</li>
+          <li>Keep polishing your ideas until your group reconvenes.</li>
+        </ol>
+        <br/>
+        <strong>Step 3 - 23 minutes - [GROUP] Final design</strong>
+        <ol class="narrow-list">
+          <li>As a group, go around and discuss each person's sketches. Keep it to 1 minute per sketch.</li>
+          <li>Working together, create a <strong>consensus sketch</strong>.</li>
+          <li>Once you've finished your sketch, <strong>have one group member take a picture of it and upload it to CMS under the "October 29 Activity" assignment.</strong>. This is not for graded credit -- it's just to give us an idea of what ideas people came up with and to create a gallery for the class to browse.</li>
+          <li>We will reconvene at the end to check out everyone's ideas.</li>
+        </ol>
+      </p>
+      
+    </div>
+    
+    
+    <div class="doc-section" >
+      <h5 style="padding-top:0;">Your brief:</h5>
+      <p>
+        Your group is an elite team of UX designers at an up-and-coming Internet commerce firm, Nile. Nile sells a variety of products globally through a hugely popular online platform. They also allow independent sellers to create their own "Nile Storefront" through which they can market their own items on the platform. The products sold are incredibly numerous, and the number of sales each year on the platform reach into the billions. Some independent sellers sell only a few thousand products each year, while others sell millions. One major challenge for Nile's continuing growth is its aging internal infrastructure. Staff depend on a dated internal dashboard that allows them to explore global sales data. They use this tool to identify upcoming sales trends, new markets, areas where they are falling short, and demographics for advertisements (among other tasks). Independent sellers also have access to a version of this dashboard that shows only their own store's sales. The tool is critical to Nile's success as a business.
+      </p>
+      <p>
+        As is the case with many rapidly growing technology companies, their infrastructure has not kept pace with their growth. The current dashboard, developed in 2003 and only updated in a minor way, uses hyperlinks and requires users to type their own queries in SQL in order to find data. Visualizations are rudimentary, and the JPEG-based map view features a few countries that no longer exist and clickable arrows for navigation. Your team has been tasked with a complete re-write of this dashboard. You are to create a new, highly interactive tool for exploring these data. While you will have a couple of years to complete a full tool, you must deliver a proposal outlining your visual and interactive elements as soon as possible.
+      </p>
+        Here are some <strong>example use cases</strong> to consider (but feel free to make up your own):
+        <ul>
+          <li>A Nile analyst is tasked with checking in on each of their national markets for issues. They need to be able to spot if sales drop in a country overnight or if there is a sudden rush in the region to buy a particular product.</li>
+          <li>A small Nile Storefront seller is curious where the items they sell are going. They want to see a breakdown of their sales across different categories such as region, item type, buyer demographics, etc.</li>
+          <li>An advertiser at Nile inspects the sales dashboard daily to identify where they should be sending more ads. They need to know whether a very specific slice of demographics (e.g. males, 18-25, who own dogs and televisions) is under- or over-performing compared to their peers.</li>
+          <li>A PR representative for a major Nile Storefront seller wants to create materials for their board meeting. They need to visualize where sales are going along different categories and demographics so that they can create a PDF breakdown of the company's current status.</li>
+          <li>An emergency planner has been given access to the dashboard to make sure that adequate supplies are reaching a disaster area and to predict future supply chain issues.</li>
+        </ul>
+      </p>
+      <h5 >Nile Sales Data</h5>
+      <p style="margin-top:30px">** The "raw" data you can access are a table of individual sales made on Nile. Employees can access all of the data, while Storefront owners can only see their sales. Assume that they have somehow resolved any internationalization / language issues.</p>
+      <table>
+        <tr><td> Name of item sold </td><td> Descriptive title of item that was sold </td></tr>
+        <tr><td> Item categories </td><td> Tags/categories describing item (e.g. "camera", "housewares", "60w lightbulb") </td></tr>
+        <tr><td> Sale timestamp </td><td> Time that the item was purchased </td></tr>
+        <tr><td> Sale quantity </td><td> Amount of item that was purchased </td></tr>
+        <tr><td> Purchase price </td><td> Cost of item </td></tr>
+        <tr><td> Total purchase price </td><td> Cost * quantity </td></tr>
+        <tr><td> Average product rating </td><td> Review rating of product at time of purchase </td></tr>
+        <tr><td> Buyer's review </td><td> If buyer reviewed, score and review </td></tr>
+        <tr><td> Location of sale </td><td> Lat/lng coordinates of the buyer </td></tr>
+        <tr><td> Geo-info for sale </td><td> City, State, Country for the buyer </td></tr>
+        <tr><td> Time it took to arrive </td><td> Time in days between order and delivery </td></tr>
+        <tr><td> Anonymized buyer ID </td><td> Identifier for the buyer </td></tr>
+        <tr><td> Buyer demographics </td><td> Hyper-detailed demographics (e.g. gender identity, age, relationship status, region of birth, interests, possessions, bad habits) </td></tr>
+      </table>
+      <p style="margin-top:50px">** Your database team at Nile is very smart, and they are happy to put together some aggregated data to make your life easier. Here are a few examples:</p>
+      <table>
+        <tr><td> Average sales over a week for a set of states/countries </td></tr>
+        <tr><td> Total monthly sales for specific products by demographics - Do all cat owners buy litter online? </td></tr>
+        <tr><td> Highest rated product bought by at least 10 people in Florida every March </td></tr>
+        <tr><td> Standard deviation in delivery time for a specific city during the last week </td></tr>
+        <tr><td> (Feel free to invent additional plausible pieces of data) </td></tr>
+      </table>
+      <p style="margin-top:50px">**You've also got access to an internal AI platform that tries to predict future trends. Here are a few examples of what it can provide:</p>
+      <table>
+        <tr><td> Expected sales next week for a specific region </td></tr>
+        <tr><td> Whether sales in a region matched algorithmic expectations last month </td></tr>
+        <tr><td> The likelihood that a specific buyer demographic will buy a specific product </td></tr>
+        <tr><td> (Feel free to invent additional plausible data predictions) </td></tr>
+      </table>
+      <p>Remember: <strong>Do not try to visualize all of these attributes</strong>.
+    </div>
+    
+  </div>
+</body>
+    
