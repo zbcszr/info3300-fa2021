@@ -9,12 +9,14 @@
   <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
   <link rel="stylesheet" href="../css/hljs-base16.css">
   <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/validator@latest/validator.min.js"></script>
+
   
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://d3js.org/topojson.v3.min.js"></script>
   
   <style>
-
+  
   .outline {
     stroke: gainsboro;
     stroke-width: 1px;
@@ -46,9 +48,23 @@
     height:500px;
     float:right;
   }
+  #controls div {
+    padding-top: 20px;
+    text-align: right;
+  }
+  #controls p {
+    margin-bottom: 5px;
+  }
   #controls input {
     width:200px;
     margin-left:5px;
+  }
+  #controls #errormsg {
+    min-height: 25px;
+    color: darkred;
+  }
+  button:disabled {
+    color: lightgrey;
   }
   
   .datapoint {
@@ -72,6 +88,7 @@
   <p> Check out the original paper on <a href="http://www.cs.umd.edu/hcil/trs/92-01/92-01.html">Dynamic HomeFinder</a>. A <a href="https://youtu.be/5X8XY9430fM">1993 video</a> shows its dynamic queries in action. </p>
   <p> If you want to play with Dynamic Homefinder, you can download a version for MSDOS <a href="http://hcil.umd.edu/products/">here</a>. Use DOS simulator like DOSBox or Boxer to run it. </p>
   <p> (Finally, note that this client/server setup intentionally disregards some best practices. It's not making the best use of back- and front-end capabilities, wastes bandwidth, and might break in high latency situations -- all of which you should do better in a real-world app.)</p>
+  <p> We'll make use of <a href="https://github.com/validatorjs/validator.js/">validator.js</a>, a lightweight form validation script, for the query part of the lectures.</p>
   <p> Here is some <a href="https://github.com/d3/d3-brush">documentation</a> on d3-brush, which we use in a later lecture for our direct filter interactions. </p>
   <h5>HTML for today:</h5>
 
@@ -99,18 +116,36 @@
 
   const requestData = async () => {
   
-    
   // Data originally in GeoJSON form on the WPRDC (https://data.wprdc.org/dataset/neighborhoods1)
   //  Converted to topoJSON, which reduced file size from 1.3mB to 250kB.
   const pgh = await d3.json("/map");
+  var map = d3.select("#map_canvas");
+  var mapWidth = map.attr("width");
+  var mapHeight = map.attr("height");
   
-  console.log(pgh);
+  // Draw a mesh so we have a background for our house locations
+  var pghMesh = topojson.mesh(pgh, pgh.objects.Neighborhoods_);
+  var projection = d3.geoMercator().fitSize([mapWidth,mapHeight], pghMesh);
+  var path = d3.geoPath().projection(projection);
   
-  const houses = await d3.json("/houses");
+  // Add the mesh
+  map.append("path")
+     .datum(pghMesh)
+     .attr("class","outline")
+     .attr("d", path);
   
-  console.log(houses)
   
-
+  // Load in house data from our backend server -- apply no filter criteria so we get everything
+  // It is good practice to keep a "var" of these datasets around so that if new data come in during interactions they will be in an obvious place and you don't need to download them again
+  var houses = await d3.json("/houses");
+  
+  
+  
+  
+  
+  
+  
+  
   };
 
   requestData();
