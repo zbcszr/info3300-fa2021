@@ -9,7 +9,7 @@ app = Flask(__name__, static_url_path='')
 # Root path serves up index.html from the static directory -- we'll be editing this file later
 @app.route('/')
 def index():
-    return app.send_static_file('index.1112.prof.html')
+    return app.send_static_file('index.html')
 
 @app.route('/css/<path:path>')
 def send_css(path):
