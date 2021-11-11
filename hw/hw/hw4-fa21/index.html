@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hw4 bz239</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+</head>
+
+<body>
+  <svg id="scatterplot" height="400" width="400" style="margin-top:50px">
+  </svg>
+  <svg id="scatterplot2" height="400" width="400" style="margin-top:50px">
+  </svg>
+  <script>
+    // importing data
+    d3.json('../hw4-fa21/diamonds.json')
+      .then((data) => {
+        console.log(data) // price and carat already numbers
+        // console.log()
+        data = data.filter((d) => { return d['price'] != 0 && d['carat'] != 0; }); //filter out price == 0 or carat == 0
+
+        const priceExtent = d3.extent(data, d => d['price']);
+        const priceScale = d3.scaleLinear().domain([0, priceExtent[1]]).range([0, chartWidth]);
+
+        const caratExtent = d3.extent(data, d => d['carat']);
+        const caratScale = d3.scaleLinear().domain([0, caratExtent[1]])
+          .range([chartHeight, 0]); // Using the trick of switching max and min
+
+        const colorExtent = d3.extent(data, d => d['color_rating']);
+        const colorScale = d3.scaleLinear().domain([0, colorExtent[1] + 1])
+          .range([chartHeight, 0]); // Using the trick of switching max and min
+
+        data.forEach((d, i) => {
+          //deal with d3 starting as lefttop corner
+          d['price'] = Number(priceExtent[1] - d['price']);
+          d['carat'] = Number(caratExtent[1] - d['carat']);
+        });
+        for (let i = 0; i < priceExtent[1] / 1000; i++) {
+          // horizontal lines
+          chartArea.append("line")
+            .attr("x1", 0)
+            .attr("x2", 400)
+            .attr("y1", 5 + priceExtent[1] / 1000 * i)
+            .attr("y2", 5 + priceExtent[1] / 1000 * i)
+            .attr("stroke", "#ccc")
+            .style("stroke-width", "1");
+          chartArea2.append("line")
+            .attr("x1", 0)
+            .attr("x2", 400)
+            .attr("y1", 5 + priceExtent[1] / 1000 * i)
+            .attr("y2", 5 + priceExtent[1] / 1000 * i)
+            .attr("stroke", "#ccc")
+            .style("stroke-width", "1");
+        }
+
+        for (let i = 0; i <= Math.floor(caratExtent[1]); i++) {
+          // vertical lines
+          chartArea.append("line")
+            .attr("x1", chartWidth / (Math.floor(caratExtent[1]) + 1) * i)
+            .attr("x2", chartWidth / (Math.floor(caratExtent[1]) + 1) * i)
+            .attr("y1", 0)
+            .attr("y2", 5 + priceExtent[1] / 1000 * 18)
+            .attr("stroke", "#ccc")
+            .style("stroke-width", "1");
+        }
+        for (let i = 0; i < 8; i++) {
+          // vertical lines for graph 2
+          chartArea2.append("line")
+            .attr("x1", chartWidth / 8 * i)
+            .attr("x2", chartWidth / 8 * i)
+            .attr("y1", 0)
+            .attr("y2", 5 + priceExtent[1] / 1000 * 18)
+            .attr("stroke", "#ccc")
+            .style("stroke-width", "1");
+        }
+
+        //circles for graph 1
+        data.forEach((d, i) => {
+          chartArea.append('circle')
+            .attr('cx', Math.floor(caratScale(d['carat'])))
+            .attr('cy', priceScale(d['price']))
+            .attr('r', 3)
+            .attr('opacity', 0.4)
+            .attr('index', i) // for debug purpose
+            .style('fill', 'darkblue');
+        });
+
+        data.forEach((d, i) => {
+          d['carat'] = Number(caratExtent[1] - d['carat']);
+          d['color_rating'] = Number(8 - d['color_rating']);
+        });
+
+        //circles for graph 2
+        data.forEach((d, i) => {
+          chartArea2.append('circle')
+            .attr('cx', colorScale(d['color_rating']) + Math.random() * 10 - 5)
+            .attr('cy', caratScale(d['carat']) + 20)
+            .attr('r', 3)
+            .attr('opacity', 0.4)
+            .attr('index', i) // for debug purpose
+            .style('fill', 'green');
+        });
+      }, (error) => { console.log('error', error); })
+
+    //svg for plot
+    const svg = d3.select('svg#scatterplot');
+    const width = svg.attr('width');
+    const height = svg.attr('height');
+    const margins = { top: 5, right: 5, bottom: 50, left: 50 }; // You can also include quotes
+    const chartWidth = width - margins.left - margins.right;
+    const chartHeight = height - margins.top - margins.bottom;
+    let chartArea = svg.append('g')
+      .attr('transform', `translate(${margins.left},${margins.top})`);
+
+    //account for magin
+
+    const svg2 = d3.select('svg#scatterplot2');
+    const width2 = svg.attr('width');
+    const height2 = svg.attr('height');
+    const margins2 = { top: 5, right: 5, bottom: 50, left: 50 }; // You can also include quotes
+    const chartWidth2 = width2 - margins2.left - margins2.right;
+    const chartHeight2 = height2 - margins2.top - margins2.bottom;
+    let chartArea2 = svg2.append('g')
+      .attr('transform', `translate(${margins2.left},${margins2.top})`);
+
+  </script>
+  <p>
+
+  </p>
+
+  <p>
+
+  </p>
+</body>
+
+</html>

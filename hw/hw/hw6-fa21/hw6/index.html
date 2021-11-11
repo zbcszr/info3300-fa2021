@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hw6</title>
+  <style>
+    .gridlines .domain {
+      display: none;
+    }
+
+    .gridlines line {
+      stroke: #bbb;
+    }
+  </style>
+
+</head>
+
+<body>
+  <p>
+    <svg id="lineplot" height="400" width="800">
+    </svg>
+    <script>
+
+      const vis1 = d3.select("#lineplot");
+
+      const vis1Width = vis1.attr("width");
+      const vis1Height = vis1.attr("height");
+
+      const vis1Margin = { top: 10, right: 10, bottom: 60, left: 60 };
+      const vis1ChartWidth = vis1Width - vis1Margin.left - vis1Margin.right;
+      const vis1ChartHeight = vis1Height - vis1Margin.top - vis1Margin.bottom;
+      let annotations = vis1.append("g").attr("id", "annotations");
+      let chartArea = vis1.append("g").attr("id", "points")
+        .attr("transform", `translate(${vis1Margin.left},${vis1Margin.top})`);
+
+      const requestData = async function () {
+        // use await to get data
+        const data = await d3.json("mariokart_records.json");
+        // d3.json("~/hw6_cms/bz239/mariokart_records.json", d3.autoType)
+        console.log(data);
+        const timeParser = d3.timeParse('%Y-%m-%d');
+
+        // year scale
+        const dateScale = d3.scaleTime().domain([timeParser(data["earliest_date"]), timeParser(data["latest_date"])]).range([0, vis1ChartWidth]);
+        // values scale
+        const valuesScale = d3.scaleLinear().domain([data["min_value"], data["max_value"]]).range([vis1ChartHeight, 0]);
+        // color scale
+        const colorScale = d3.scaleOrdinal().domain(['Kalimari Desert', 'Rainbow Road', 'D.K.\'s Jungle Parkway', 'Toad\'s Turnpike', "Luigi Raceway"])
+          .range(['blue', 'orange', 'green', 'red', 'purple']);
+
+        // Y axis
+        let leftAxis = d3.axisLeft(valuesScale)
+        let leftGridlines = d3.axisLeft(valuesScale)
+          .tickSize(-vis1ChartWidth - 10)
+          .tickFormat("")
+        annotations.append("g")
+          .attr("class", "y axis")
+          .attr("transform", `translate(${vis1Margin.left - 10},${vis1Margin.top})`)
+          .call(leftAxis)
+        annotations.append("g")
+          .attr("class", "y gridlines")
+          .attr("transform", `translate(${vis1Margin.left - 10},${vis1Margin.top})`)
+          .call(leftGridlines);
+
+        // X axis
+        let bottomAxis = d3.axisBottom(dateScale)
+        let bottomGridlines = d3.axisBottom(dateScale)
+          .tickSize(-vis1ChartHeight - 10)
+          .tickFormat("")
+        annotations.append("g")
+          .attr("class", "x axis")
+          .attr("transform", `translate(${vis1Margin.left},${vis1ChartHeight + vis1Margin.top + 10})`)
+          .call(bottomAxis);
+        annotations.append("g")
+          .attr("class", "x gridlines")
+          .attr("transform", `translate(${vis1Margin.left},${vis1ChartHeight + vis1Margin.top + 10})`)
+          .call(bottomGridlines);
+
+        // create line generator
+        var lineGen = d3.line()
+          .x(d => dateScale(timeParser(d['date'])))
+          .y(d => valuesScale(d['record_time']));
+
+        // use datajoin to create one tag for each timeseries object
+        tags = chartArea.selectAll('g.tag').data(data.timeseries)
+          .join('g')
+          .attr('class', 'tag')
+          .style("stroke", d => colorScale(d['track']));
+
+        // one path element for each g tag
+        tags.append("path")
+          .attr("class", "line")
+          .attr("stroke-width", 2)
+          .attr("fill", "none")
+          .attr("d", d => lineGen(d.values))
+
+        tags.selectAll('circle')
+          .data(d => d.values)
+          .join('circle')
+          .attr("class", "pop")
+          .attr("r", 2)
+          .attr("cx", d => dateScale(timeParser(d['date'])))
+          .attr("cy", d => valuesScale(d['record_time']))
+          .attr("fill", d => colorScale(d['track']))
+
+      }
+      requestData();
+    </script>
+
+
+  </p>
+</body>
+
+</html>

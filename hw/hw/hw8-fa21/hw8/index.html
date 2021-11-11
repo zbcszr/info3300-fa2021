@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <title>hw8</title>
+</head>
+
+<body>
+
+  <p> #1 </p>
+
+  <div id="barcodes">
+  </div>
+  <script>
+    const list = d3.select("#barcodes");
+
+    const requestData = async function () {
+      const data = await d3.json("movie_barcodes.json");
+      var element = document.createElement("div");
+
+      data.forEach((d) => {
+        console.log(d);
+        const subdiv = list.append("div")
+        const header = subdiv.append("h4")
+          .text(d.title);
+        const canvas = subdiv.append("canvas")
+          .attr("id", "movie")
+          .attr("width", 800)
+          .attr("height", 100);
+
+        var ctx = canvas.node().getContext('2d');
+        var imageData = ctx.getImageData(0, 0, 800, 100);
+        var pixels = imageData.data;
+
+        d.bars.forEach(bar => {
+          let num = parseInt(bar.color.replace('#', ''), 16);
+          let r = (num >> 16) & 255;
+          let g = (num >> 8) & 255;
+          let b = num & 255;
+          let x = bar.x;
+
+          for (let y = 0; y < 100; y++) {
+            let startingIndex = (y * 800 + x) * 4;
+            pixels[startingIndex + 0] = r;
+            pixels[startingIndex + 1] = g;
+            pixels[startingIndex + 2] = b;
+            pixels[startingIndex + 3] = 255;
+          }
+        });
+        ctx.putImageData(imageData, 0, 0);
+      });
+    }
+
+    requestData();
+  </script>
+
+</body>
+
+</html>

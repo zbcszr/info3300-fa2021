@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hw7 bz239</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://d3js.org/topojson.v3.min.js"></script>
+
+  <style>
+    .outline {
+      stroke: white;
+      stroke-width: 1px;
+      fill: none;
+    }
+
+    .stateOutline {
+      stroke: darkgrey;
+      stroke-width: 3px;
+      fill: none;
+    }
+  </style>
+</head>
+
+<body>
+  <p>
+    <svg id="choropleth" height="770" width="990" style="margin:20px"> </svg>
+
+  <ul id="threshold"> </ul>
+
+  <script>
+    //set up canvas
+    const svg = d3.select("#choropleth");
+    const list = d3.select("#threshold");
+    const width = svg.attr("width");
+    const height = svg.attr("height");
+    const margin = { top: 20, right: 20, bottom: 20, left: 20 };
+    const mapWidth = width - margin.left - margin.right;
+    const mapHeight = height - margin.top - margin.bottom;
+    const map = svg.append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    const lst = list.append("g");
+
+    const requestData = async function () {
+      // use await to get data
+      const nyincome = await d3.json("ny_income.topo.json");
+
+      var zips = topojson.feature(nyincome, nyincome.objects.zip_codes);
+      var zipsMesh = topojson.mesh(nyincome, nyincome.objects.zip_codes);
+      var stateMesh = topojson.mesh(nyincome, nyincome.objects.state);
+      var projection = d3.geoMercator().fitSize([mapWidth, mapHeight], zips);
+      var path = d3.geoPath().projection(projection);
+
+      console.log("hello!");
+      var info = [];
+      nyincome.objects.zip_codes.geometries.forEach((d) => {
+        info.push(d.properties.median_income);
+      });
+      console.log(info);
+      const colorScale = d3.scaleQuantile()
+        .domain(info) //no need for extent
+        .range(['#440154FF', '#33638DFF', '#29AF7FFF', '#B8DE29FF', '#FDE725FF']) // the R color scheme called viridis
+
+      // var graticule = d3.geoGraticule10();
+      // map.append("path").attr("class", "graticule").attr("d", path(graticule))
+
+      map.selectAll("path").data(zips.features)
+        .join("path")
+        .attr("class", "state")
+        .attr("d", path)
+        .style("fill", d => colorScale(d.properties.median_income));
+
+      map.append("path").datum(zipsMesh)
+        .attr("class", "outline")
+        .attr("d", path);
+
+      map.append("path").datum(stateMesh)
+        .attr("class", "stateOutline")
+        .attr("d", path);
+
+      const towerLocation = projection([-76.4850, 42.4476])
+      map.append("circle")
+        .attr("r", 5)
+        .attr("fill", "black")
+        .attr("cx", towerLocation[0])
+        .attr("cy", towerLocation[1]);
+
+      var cutoffs = colorScale.quantiles();
+      cutoffs.forEach((d) => {
+        console.log(d);
+        list.append("li")
+          .text(d)
+      })
+
+
+    }
+    requestData();
+  </script>
+
+
+  </p>
+
+</body>
+
+</html>

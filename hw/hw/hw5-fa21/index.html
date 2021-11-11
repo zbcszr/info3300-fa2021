@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>hw5</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+</head>
+
+<body>
+  <p>
+  <pre id="textSimulation"> Sorry, I have a family emergency so I plan to drop this homework.</pre>
+  </p>
+  <svg id="join" height="420" width="420">
+  </svg>
+
+
+  <script>
+    const demo = d3.select("svg#join");
+    demo.selectAll("circle").data(circles)
+      .join("circle") // If you give join an element name like "rect" or "circle", it uses defaults for
+      //  enter, update, and exit which add one of those elements or remove them as 
+      //  necessary. Its guesses are usually correct. Style stuff after the join
+      .attr("r", 20)
+      .attr("fill", d => colorScale(d.age))
+      .attr("cx", d => d['x'])
+      .attr("cy", d => d['y']);
+
+    const numCircles = 7;
+    // how many empty spots you want to have in your visuals
+    const emptySpots = 4;
+    // the size of the viewport -- we can make it smaller than numCircles+emptySpots to make it look like it takes time to wrap around
+    //  setting it to numCircles+emptySpots makes things immediately wrap around the SVG
+    const viewport = 9;  // for wraparound use numCircles + emptySpots
+    // space between circles
+    const xSpacing = 50;
+    const yPos = 50;
+    // don't modify
+    const maxLen = (numCircles + emptySpots) * xSpacing;
+
+    // Simulation lives here
+    var circles = [];
+
+    // Steps the simulation one step forward, adding and removing elements as necessary
+    var tick = function () {
+
+      for (let i = 0; i < circles.length; i++) {
+        // Update circle age
+        circles[i]['age'] = circles[i]['age'] + 1;
+      }
+      // If we have numCircles, remove the oldest one
+      if (circles.length >= numCircles) {
+        circles.shift();
+      }
+      // Always add a circle positioned after the most recent one
+      let element;
+      if (circles.length === 0) {
+        element = { x: xSpacing, y: yPos, age: 1 };
+      }
+      else {
+        let recent = circles[circles.length - 1];
+        element = { x: xSpacing + (recent.x % maxLen), y: yPos, age: 1 };
+      }
+      circles.push(element);
+
+      // Update for viewport
+      let view = [];
+      for (let i = 0; i < circles.length; i++) {
+        if (Math.floor(circles[i]['x'] / xSpacing) <= viewport) {
+          view.push(circles[i]);
+        }
+      }
+
+      updateChart(view); // This goes to the data join function
+
+      // This is a helper to print out the text version for reference
+      d3.select("#textSimulation").text(plaintextTicks(circles));
+
+    }
+
+    // This function makes a user-friendly text version of the simulation
+    //  e.g. [ - 7 6 5 4 3 2 1 - - - ]
+    // When a number is provided, that's the "age" of the circle
+    function plaintextTicks(data) {
+      let dir = [];
+      for (let i = 0; i < viewport; i++) {
+        dir.push('-');
+      }
+      data.forEach(d => {
+        if (Math.floor(d.x / xSpacing) <= viewport) {
+          let pos = (d.x / xSpacing) - 1;
+          dir[pos] = d.age;
+        }
+      })
+      return '[ ' + dir.join(' ') + ' ]';
+    }
+
+    // setInterval causes a function (tick in this case) to be run every X milliseconds. It will do this forever unless you stop it
+    setInterval(tick, 800);
+
+  </script>
+
+</body>
+
+</html>

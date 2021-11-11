@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script src="https://d3js.org/d3.v4.min.js"></script>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HW3 bz239</title>
+</head>
+
+<body>
+  <script>
+    var heightq1 = 300;
+    var widthq1 = 300;
+
+    var svgq1 = d3.select("body")
+      .append("svg")
+      .attr("width", widthq1)
+      .attr("height", heightq1);
+
+    // <rect x=100 y=400 width=200 height=200 fill="orange" stroke="limegreen" stroke-width=5 />
+    svgq1.append("rect")
+      .attr("x", 10)
+      .attr("y", 10)
+      .attr("width", widthq1 / 5) //60
+      .attr("height", heightq1 / 5) //60
+      .style("fill", "red")
+      .style("stroke", "purple")
+      .style("stroke-width", "5");
+
+    svgq1.append("rect")
+      .attr("x", 10)
+      .attr("y", 200)
+      .attr("width", 40) //100
+      .attr("height", 30) //30
+      .style("fill", "orange")
+      .style("stroke", "navy")
+      .style("stroke-width", "5");
+
+    svgq1.append("rect")
+      .attr("x", 250)
+      .attr("y", 40)
+      .attr("width", 20) //20
+      .attr("height", 50) //100
+      .style("fill", "black")
+      .style("stroke", "yellow")
+      .style("stroke-width", "5");
+
+    svgq1.append("circle")
+      .attr("r", 4)
+      .attr("cx", 150)
+      .attr("cy", 150)
+      .style("fill", "#ffb6c1");
+
+    //text element
+    svgq1.append("text")
+      .text("INFO3300")
+      .attr("x", "50%")
+      .attr("y", "50%")
+      .attr("text-anchor", "middle")
+      .style("font-size", "20px")
+      .style("font", "Verdana");
+
+    var heightq2 = 360;
+    var widthq2 = 360;
+
+    var svgq2 = d3.select("body")
+      .append("svg")
+      .attr("width", widthq2)
+      .attr("height", heightq2);
+
+    for (let i = 0; i < 12; i++) {
+      // vertical lines
+      svgq2.append("line")
+        .attr("x1", 20 + 32 * i)
+        .attr("x2", 20 + 32 * i)
+        .attr("y1", 20)
+        .attr("y2", 340)
+        .attr("stroke", "#ccc")
+        .style("stroke-width", "1");
+    }
+
+    for (let i = 0; i < 12; i++) {
+      // vertical lines
+      svgq2.append("line")
+        .attr("x1", 20)
+        .attr("x2", 340)
+        .attr("y1", 20 + 32 * i)
+        .attr("y2", 20 + 32 * i)
+        .attr("stroke", "#ccc")
+        .style("stroke-width", "1");
+    }
+
+    circles = [{ "x": 52, "y": 52 },
+    { "x": 68, "y": 148 },
+    { "x": 100, "y": 212 },
+    { "x": 148, "y": 276 },
+    { "x": 180, "y": 288.8 },
+    { "x": 212, "y": 263 },
+    { "x": 244, "y": 244 },
+    { "x": 276, "y": 231.2 },
+    { "x": 308, "y": 224.8 }]
+
+    circles.forEach(circle => {
+      svgq2.append("circle")
+        .attr("r", 10)
+        .attr("cx", circle.x)
+        .attr("cy", circle.y)
+        .style("fill", "green");
+    });
+
+    labels = [{ info: "0", "x": 20, "y": 350 },
+    { info: "5", "x": 180, "y": 350 },
+    { info: "10", "x": 340, "y": 350 },
+    { info: "0", "x": 10, "y": 340 },
+    { info: "5", "x": 10, "y": 180 },
+    { info: "10", "x": 10, "y": 20 }]
+
+    labels.forEach(label => {
+      svgq2.append("text")
+        .text(label.info)
+        .attr("x", label.x)
+        .attr("y", label.y)
+        .attr("text-anchor", "middle")
+        .attr("dominant-baseline", "central")
+        .style("font-size", "5")
+        .style("font", "Verdana");
+
+    });
+  </script>
+
+  <ul>
+    <li>
+      A: Sequencial color scale, it is effective when we want to see the comparison
+      of a continuous range. For example,
+      sequencial color scale can be used to describe the active level of a user, intuitively,
+      the darker the color the more active a user is.
+    </li>
+
+    <li>
+      B: Not effective, because the transition from 1 to mid point and from mid point to
+      -1 is very similar. It's hard to tell which transition phase it the color is representing.
+    </li>
+
+    <li>
+      C: People with deuteranomaly or tritanomaly as anomalous trichromat or dichromat would be struggling.
+      Deuteranomaly which is a reduced sensitivity to green light and tritanomaly which is a reduced sensitivity to blue
+      light. Anomalous trichromat refers to people who use 3 kinds of color receptors but one of the color is
+      inaccurate,
+      while dichromate refers to people who use 2 of 3 kinds of color receptor.
+
+      <a href="https://www.mun.ca/biology/scarr/Colour_deficiency_test.html">source</a>
+    </li>
+
+    <li>
+      D: No. As discussed in class, although there is a hue shift but human perceived different luminancity from the
+      colors. Human would think yellow is much brigter than red but actually we intended red to represent the max of the
+      data.
+
+    </li>
+  </ul>
+</body>
+
+</html>
