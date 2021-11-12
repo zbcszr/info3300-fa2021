@@ -50,7 +50,6 @@
   }
   #controls div {
     padding-top: 20px;
-    text-align: right;
   }
   #controls p {
     margin-bottom: 5px;
@@ -88,16 +87,19 @@
   <p> Check out the original paper on <a href="http://www.cs.umd.edu/hcil/trs/92-01/92-01.html">Dynamic HomeFinder</a>. A <a href="https://youtu.be/5X8XY9430fM">1993 video</a> shows its dynamic queries in action. </p>
   <p> If you want to play with Dynamic Homefinder, you can download a version for MSDOS <a href="http://hcil.umd.edu/products/">here</a>. Use DOS simulator like DOSBox or Boxer to run it. </p>
   <p> (Finally, note that this client/server setup intentionally disregards some best practices. It's not making the best use of back- and front-end capabilities, wastes bandwidth, and might break in high latency situations -- all of which you should do better in a real-world app.)</p>
-  <p> We'll make use of <a href="https://github.com/validatorjs/validator.js/">validator.js</a>, a lightweight form validation script, for the query part of the lectures.</p>
+  <p> On 11/10 we made use of <a href="https://github.com/validatorjs/validator.js/">validator.js</a>, a lightweight form validation script, for the query part of the lectures.</p>
   <p> Here is some <a href="https://github.com/d3/d3-brush">documentation</a> on d3-brush, which we use in a later lecture for our direct filter interactions. </p>
   <h5>HTML for today:</h5>
 
   <div id="panel">
+    
     <div id="map">
       <svg id="map_canvas" height="490" width="600" style="background: #fff;" ></svg>
     </div>
+    
     <div id="controls">
     </div>
+    
   </div>
   
 
@@ -110,7 +112,7 @@
     </code>
   </pre>
   </div>
-
+  
   <!--- Code for today's class --->
   <script id="notes1">
 
@@ -137,16 +139,61 @@
     
     
     
+    // Let's make some dynamic querying tools
+    // We want to give more rapid response to users and enable more direct manipulation of interface elements
+    // To do so, we'll use d3.brush to make our own sliders
+    // We'll go further, showing the data distribution to the user underneath the slider
+    // This is going to require that we keep the whole dataset in RAM -- querying the server every time the user interacts is going to be cumbersome and intractible once latency gets involved
+    // (whenever you design systems like this, you'll face this kind of trade-off)
+    
+    // First, a list of filters the user has applied
+    // The dict is going to map attribName => filter_function
+    //  - We use a dict so that we can change filters as the user adjusts them
+    //  - The filter_function is a clever way to set up the filters in real time...
+    //    the interactive elements will create a function that is True when a point
+    //    'passes' the filters
+    var filters = {};
+    
+    // EXAMPLE FILTER FUNCTION
+    // filters['price'] = function(d) {  return d['Sale Price'] < 400000 && d['Sale Price'] > 300000;  }
+    
+    // And a function for checking whether a point "passes through" the filters
+    // For a given point, we'll loop through each of the filter functions and apply them
+    // Each time we apply a filter, we use && to make sure a point passes ALL of the filters
+    function pointPassesFilters( point ) {
+    
+      // Start out with true so we can use && to 
+      let stillPassed = true;
+      
+      // Loop through the filters and check if it passes each
+      // Objects.values(filters) in this case is the list of filter functions
+      
+      Object.values(filters).forEach( filterFunc => {
+        
+        stillPassed = filterFunc(point) && stillPassed;
+        // Might want to short-circuit the loop if it fails and you have lots of filters
+        
+      });
+      
+      return stillPassed;
+      
+    }
     
     
     
     
-    
-    // We wrap our circle-drawing code in a function because we know we're going to be updating circles as the user interacts with the interface
-    // This makes life easier and reduces redundant copies of code which lead to bugs
+    // We'll still use an updateHouses function for this one
+    // ... it just now filters our data before displaying it rather than querying the server (see top notes)
     function updateHouses(data) {
       
       console.log("updateHouses",data);
+      console.log(filters);
+      
+      // Filter our data
+      data = data.filter( d => pointPassesFilters(d) );  // Applies passesFilters to each datapoint, one by one
+      
+      //  quicker way to write this:  data = data.filter(pointPassesFilters);
+      
       
       // Project the lat, lng data to pixels
       data.forEach( d => {
@@ -161,7 +208,7 @@
          .attr("r", 4)
          .attr("cx", d => d.position[0])
          .attr("cy", d => d.position[1])
-         // click to toggle star and and off
+         // Click on circles to "star" them
          .on("click", function(event, d) {
            
            let circle = d3.select(this);
@@ -179,7 +226,6 @@
                updateStarred(starred);
              });
            }
-           
          });
       
     }
@@ -189,6 +235,121 @@
     
     
     
+    // Make the interactive sliders
+    
+    // A function to make a slider element and wire it up
+    function makeSlider( container, label, attribute, sliderWidth, sliderHeight ) {
+      
+      // Get a raw array of values for this property
+      let values = houses.map(d => d[attribute]);
+      
+      // Find min and max for some scales
+      let minMax = d3.extent(values);
+      let xScale = d3.scaleLinear().domain( minMax )
+                                  .range([10,sliderWidth-10]); // padding here for ease
+      let xAxis = d3.axisBottom(xScale).tickFormat(d3.format(".2s"));
+
+
+      // Create some HTML elements
+      let wrapper = container.append("div").attr("class", "control");
+      wrapper.append("div").text(label);
+      let canvas = wrapper.append("svg").attr("width",sliderWidth)
+                                        .attr("height",sliderHeight+20)
+                                        .attr("attribute",attribute);
+      let areaLayer = canvas.append("g");
+      canvas.append("g").attr("transform",`translate(0,${sliderHeight})`)
+                        .call(xAxis);
+
+      // Built-in d3 helper function to count up data
+      let numBins = 10;
+      // Program a histogram generator to count up data into "bins"
+      let histoGen = d3.histogram().domain( minMax )
+                                 .thresholds( numBins );
+      let counts = histoGen(values);
+      console.log(counts);
+      // Each bin lists all of the things in it. It also has properties:
+      //  x0 - start of bin;  x1 - end of bin;  length - number of things in bin
+                                 
+      // To make the line chart smoother, we add a dummy value at the start of the array using unshift
+      //  (as to why: since we are using x1 for our x values in the area chart, the lowest x1 starts
+      //    1/10th into the x axis. To make the area start at the min value, we create a dummy point 
+      //    that has x1 equal to the minimum x and a copy of the first bin's length )
+      counts.unshift({ x1: counts[0].x0,
+                       length: counts[0].length });
+
+      let yScale = d3.scaleLinear().domain( d3.extent(counts, d=>d.length) )
+                                   .range([sliderHeight, 4]); 
+      
+      // Area works line a line generator, but you have y0 and y1 for the bottom and top of the area
+      let area = d3.area().x(d => xScale(d.x1))
+        .y0(yScale(0))
+        .y1(d => yScale(d.length))
+        .curve(d3.curveNatural);
+        
+      // Adding the path works just like a line (the area generator just makes a filled region)
+      areaLayer.append("path").datum(counts)
+        .attr("class", "area")
+        .attr("d", area);
+        
+      
+        
+      // Create the filter_function for this particular slider
+      // BY DEFAULT, it just always returns true because any point passes through the filter
+      let filterFunc = d => true;
+      // Add it to the dict so we can overwrite it later
+      filters[attribute] = filterFunc;
+
+      
+      // Allow the user to select regions of the slider
+      var brush = d3.brushX().extent([[10,0],                           // Upper left corner
+                                      [sliderWidth-10, sliderHeight]])  // Lower right corner
+                             .on("brush end", brushMoved);
+      // NOTE: we still need to *call the brush* towards the end of our code to "paste" it into HTML
+      
+      function brushMoved( event ) {
+          
+        //console.log(d3.event.type, d3.event.selection);
+        
+        // Everything but clicking on brush area
+        if (event.selection !== null) {
+          
+          // Run scales in reverse to get data values for the ends of the brush
+          let start = xScale.invert( event.selection[0] );
+          let end = xScale.invert( event.selection[1] );
+          
+          // Overwrite old filter in our dictionary
+          // This filter now only returns True if the point's value is between start and end
+          let filterFunc = d => d[attribute] >= start && d[attribute] <= end;
+          filters[attribute] = filterFunc;
+          
+          updateHouses(houses);
+          updateStarred(starred);
+        }
+        // Clicking on brush area to empty it out
+        else {
+            // Selected nothing, let everything pass
+            let filterFunc = d => true;
+            filters[attribute] = filterFunc;
+            
+            updateHouses(houses);
+            updateStarred(starred);
+        }
+        
+      
+      }   
+               
+      // Call the brush to add it to the slider - do this at the end so that it covers the area chart
+      canvas.append("g").attr("class","brush").call(brush);
+      
+    }
+    
+    // Make the sliders
+    let controls = d3.select("#controls");
+    
+    makeSlider( controls, "Sale Price: ", "Sale Price", 280, 30 );
+    makeSlider( controls, "Bedrooms: ", "Bedrooms", 280, 30 );
+    makeSlider( controls, "Bathrooms: ", "Bathrooms", 280, 30 );
+    makeSlider( controls, "Lot Size: ", "Lot Size", 280, 30 );     // serv.py sends this too
     
     
     
@@ -197,7 +358,7 @@
     
     
     
-    
+    // SAME STARRED CODE AS 11-10
     
     // On first load, grab anything that's already been starred from the server
     var starred = await d3.json("/starred");
@@ -215,13 +376,19 @@
     }
     
     updateStarred(starred);
+    
+    
+    
+    
+    
+    
 
   };
 
   requestData();
 
 
-
+  
   </script>
 
 
