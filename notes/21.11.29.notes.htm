@@ -53,7 +53,6 @@
   // Layer for drawing
   const width = d3.select("#chord").attr("width");
   const height = d3.select("#chord").attr("height");
-  const radius = (width / 2.0) - 125;
   const chordChart = d3.select("#chord").append("g");
   
   const drawChord = async () => {
@@ -72,73 +71,203 @@
     let nodes = got.nodes;
     let links = got.edges;
     
-    // Fix up the data
+    // The d3.chord function needs a 2d matrix of flow in order to function ( a *dense edge matrix* )
+    // This doesn't seem like the best design choice, but as we saw in the previous lecture, it's common
+    // We'll create one from our *sparse edge list* data
+    
+    // Make zeroed-out matrix that's a square of nodes.length size
+    let matrix = []; // dense edge matrix
+    let connections = {};  // To save some time later, we'll also store lists of connections between nodes
+    for (let i=0; i<nodes.length; i++) { 
+        let row = [];
+        for (let j=0; j<nodes.length; j++) { row.push(0); }
+        
+        matrix.push(row);
+        connections[i] = [i]; // everything connected to itself!
+    }
+    console.log(matrix);
+    
+    // Now build the edge matrix -- we'll use cooccurrence in the cells to show the "weight" of each edge
+    links.forEach( d => {
+      
+      // Add in if statement to avoid linking unlinked items
+      if (d.weight > 0) {
+      
+        // Thankfully, the links have extra data for the index of their source and target
+        //   (I actually generated this by using a dictionary and then console.log(JSON.stringify(got)) )
+        // As edges are bidirectional, we'll fill in two cells of the matrix for each one
+        matrix[d.sourceIndex][d.targetIndex] = d.weight;
+        matrix[d.targetIndex][d.sourceIndex] = d.weight;
+        
+        connections[d.sourceIndex].push(d.targetIndex);
+        connections[d.targetIndex].push(d.sourceIndex);
+        
+      }
+    });
+    // Anything left unfilled remains at 0, which will draw no ribbons
+    console.log(matrix);
+    console.log(connections);
+    
+    let radius = (width / 2.0) - 125;
+    
+    // Make a chord diagram generator
+    let chordGen = d3.chord()
+                    .padAngle(.04)
+                    .sortSubgroups(d3.descending)
+                    .sortChords(d3.descending)
+    // Make an outer arc generator
+    let arcGen = d3.arc()
+                    .innerRadius(radius)
+                    .outerRadius(radius + 20)
+    // Make a ribbon generator
+    let ribbonGen = d3.ribbon()
+                      .radius(radius)
+    
+    // Feed in the matrix
+    let chords = chordGen(matrix);
+    console.log(chords);
+    
+    // NOTICE: The chord gen ONLY looks at the matrix
+    //  If you ever want to make use of node metadata, then you have to look up by index
+    //  This is why it's critical to line up the indices in the matrix with nodes indices
     
     
-    
-    
-    // Compose some generators
-    
-    
-    
+    // One note - the chord diagram is going to draw at 0,0
+    // The easiest solution is to translate the layer
+    chordChart.attr("transform",`translate(${width/2.0},${height/2.0})`);
     
     // Make the outer ring
+    let colorScale = d3.scaleOrdinal().range(colorPalette);
+
+    // We'll use a data join to make a G tag and then make paths within it using the data for the ring
+    let ringContainer = chordChart.append("g");
+    let rings = ringContainer.selectAll("g.segment")
+                            .data(chords.groups)
+                            .join("g")
+                            .attr("class","segment");
+                            
+    // Make each ring segment using the arc generator
+    // Note that the chord gen has already created data that the arc generator needs
+    rings.append("path")
+         .attr("fill", d => colorScale( nodes[ d.index ].Affiliation ))
+         .attr("stroke", d => colorScale( nodes[ d.index ].Affiliation ))
+         .attr("d", arcGen);
+
+
+    // Now make a path for each ribbon using a data join
+    // Same as before, the chord gen has created the data necessary for the ribbon generator
+    let ribbonContainer = chordChart.append("g");
+    let ribbons = ribbonContainer.selectAll("path.ribbon")
+                      .data(chords)
+                      .join("path")
+                      .attr("class","ribbon")
+                      .attr("fill-opacity", 0.5)
+                      .attr("stroke", "none")
+                      .attr("fill", d => colorScale( nodes[ d.source.index ].Affiliation ))
+                      .attr("d", ribbonGen);
     
     
-    
-    
-    // Make the ring segments
-    
-    
-  
     
     // Adding in the labels
+    // We want them to go around the circle, so we have to be a bit clever here
+    // To accomplish this, we will make a transform for each label that shifts it around the circle
+    // * For clarity, we'll make a new property in the dataset for the transform
+    //   This could also all be done in one line during an append if you're sneaky
+    
+    // ** Remember that transforms work from the end of the string back to the front **
+    //    We need to first move it out and then rotate it around the circle
+    //    If we have to flip the text, we want to do it first
+    chords.groups.forEach( d => {
+      let transform = '';
+      // find midpoint, convert to degrees
+      let midpoint = (d.startAngle + d.endAngle) / 2;
+      let rotation = ( midpoint ) * ( 180 / Math.PI ) - 90;
+      transform = transform + ` rotate(${rotation})`;
+      transform = transform + ` translate(${radius+25}, 0)`;
+      if (rotation > 90) {
+        transform = transform + ' rotate(180)';
+        // Notice text anchor issue that also first
+        d.anchor = "end";
+      }
+      d.trans = transform;
+    });
+    
+    rings.append("text")
+         .attr("transform", d => d.trans)
+         .text(d => nodes[ d.index ].Name )
+         .attr("text-anchor", d => d.anchor);
+    
+    
+    
+    // Add interactions
+    // Highlighting functions
+    // First, we make some blanket functions to show and hide all elements 
+    function restoreHighlights() {
+      rings.attr("opacity", 1);   // both text and ring
+      ribbons.attr("opacity", 1);
+    }
+    function lowlightAll() {
+      rings.attr("opacity", 0.2); // both text and ring
+      ribbons.attr("opacity", 0.2);
+    }
+    
+    // Now, we'll make functions that show
+    //  The challenge in this part is picking out the right segments to highlight
+    function highlightRings(index) {
+      // We'll do a filter of elements based on their data
+      //  (This works just like an array filter but for data joined elements in a selectAll )
+      //             Here *rings* is the result of svg.selectAll("g.segment").data().join(), not an array
+      let targetSegments = rings.filter( d => {
+        return connections[d.index].includes(index);    // JS: arr.includes(x) === Python: x in arr 
+      });
+      targetSegments.attr("opacity",1);
+    }
+    
+    // Same filter, but this time for ribbons
+    function highlightRibbons(index) {
+      let targetRibbons = ribbons.filter( d => {
+        return d.source.index === index || d.target.index === index;
+      });
+      targetRibbons.attr("opacity",1);
+    }
+    
+    rings.on("mouseout", restoreHighlights)
+         .on("mouseover", function(event, d) {
+              lowlightAll();
+              highlightRings(d.index);
+              highlightRibbons(d.index);
+            });
     
     
     
     
-    // Add mouseover interactions
     
+    // Now let's see how you might make the arcs have nice gradients
+    // We'll employ the clever defs ID technique from https://bl.ocks.org/JulienAssouline/2847e100ac7d4d3981b0f49111e185fe and the 
     
+    // Define a simple function to generate gradient IDs from a ribbon object
+    let getGradID = chord => `linkGrad-${chord.source.index}-${chord.target.index}`;
+
+    // Now make the gradient definitions using a data join
+    var grads = d3.select("#chord").append("defs")
+      .selectAll("linearGradient")
+      .data(chords)
+      .join("linearGradient")
+      .attr("id", getGradID)
+      .attr("gradientUnits", "userSpaceOnUse")  // use the coordinate system of whatever is being filled
+      .attr("x1", d => radius * Math.cos((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2) )
+      .attr("y1", d => radius * Math.sin((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2) )
+      .attr("x2", d => radius * Math.cos((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2) )
+      .attr("y2", d => radius * Math.sin((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2) )
+    grads.append("stop")
+      .attr("offset", "0%")
+      .attr("stop-color", d => colorScale(nodes[ d.source.index ].Affiliation) )
+    grads.append("stop")
+      .attr("offset", "100%")
+      .attr("stop-color", d => colorScale(nodes[ d.target.index ].Affiliation) )
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    // // EXTRA MATERIAL: Now let's see how you might make the arcs have nice gradients
-    // // We'll employ the clever defs ID technique from https://bl.ocks.org/JulienAssouline/2847e100ac7d4d3981b0f49111e185fe 
-    // 
-    // // Define a simple function to generate gradient IDs from a ribbon object
-    // let getGradID = chord => `linkGrad-${chord.source.index}-${chord.target.index}`;
-    // 
-    // // Now make the gradient definitions using a data join
-    // var grads = d3.select("#chord").append("defs")
-    //   .selectAll("linearGradient")
-    //   .data(chords)
-    //   .join("linearGradient")
-    //   .attr("id", getGradID)
-    //   .attr("gradientUnits", "userSpaceOnUse")  // use the coordinate system of whatever is being filled
-    //   .attr("x1", d => radius * Math.cos((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2) )
-    //   .attr("y1", d => radius * Math.sin((d.source.endAngle-d.source.startAngle) / 2 + d.source.startAngle - Math.PI/2) )
-    //   .attr("x2", d => radius * Math.cos((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2) )
-    //   .attr("y2", d => radius * Math.sin((d.target.endAngle-d.target.startAngle) / 2 + d.target.startAngle - Math.PI/2) )
-    // grads.append("stop")
-    //   .attr("offset", "0%")
-    //   .attr("stop-color", d => colorScale(nodes[ d.source.index ].Affiliation) )
-    // grads.append("stop")
-    //   .attr("offset", "100%")
-    //   .attr("stop-color", d => colorScale(nodes[ d.target.index ].Affiliation) )
-    // 
-    // // Overwrite the old fill
-    // ribbons.attr("fill", d => "url(#" + getGradID(d) + ")" )
+    // Overwrite the old fill
+    ribbons.attr("fill", d => "url(#" + getGradID(d) + ")" )
     
     
     
@@ -147,6 +276,8 @@
   drawChord();
 
   
+  
+
   
 
   </script>
