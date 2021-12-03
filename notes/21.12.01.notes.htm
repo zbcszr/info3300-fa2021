@@ -110,19 +110,41 @@
   // Start with some housekeeping
   //  Build d3 structures to process the tree data 
   //  (each node has a key "name" and a key "children" which points to a list of child nodes)
-  let treeGen = d3.tree();
-  treeGen.nodeSize([40,300]);     // Fixed size for nodes
-   
-   
+  // let treeGen = d3.tree();
+  // treeGen.nodeSize([40,300]);     // Fixed size for nodes
   
-  // // Make a hidden SVG to use for measuring
-  // let virtualText = d3.select("body").append("svg").attr("width",0).attr("height",0)
-  //                     .append("text").attr("class","node-label");
-  // 
-  // virtualText.text("thisisatest");
-  // console.log(virtualText.node().getComputedTextLength())
+  
+  
+  //  ** Switching to FlexTree **
+  //     (comment out the lines above this)
+  let treeGen = d3.flextree();  
+  
+  // To make flextree work, it needs to know the exact size to allocate for each node in the tree
+  //  so we must estimate the correct size of a node label using built-in SVG functions...
+  
+  // To do so we use a sneaky trick -- we create an invisible text label so that we can measure its size
+  // It's really the only effective way of accurately estimating the eventual width of an SVG <text>
+  
+  // Make a hidden SVG to use for measuring
+  let virtualText = d3.select("body").append("svg").attr("width",0).attr("height",0)
+                      .append("text").attr("class","node-label");
                       
-                                
+  virtualText.text("thisisatest");
+  console.log(virtualText.node().getComputedTextLength())
+                      
+  // Use the nodeSize function to supply a [width, height] array for each node in the flexTree
+  let xPadding = 100
+  let yPadding = 4; //px above and below text
+  treeGen.nodeSize(node => {
+    virtualText.text(node.data.name);
+    let width = xPadding + virtualText.node().getComputedTextLength();
+    let height = fontScale(node.depth) + 2*yPadding;
+    return [height, width]; // Another place where we swap X and Y
+  });    
+  
+  // You can also use .spacing() to space the nodes out a bit better
+  treeGen.spacing(10);
+  //  ** End FlexTree changes      
                       
                 
   
@@ -153,7 +175,6 @@
     root.each( node => {
       if (node.x < top.x) {top = node};
       if (node.x > bottom.x) {bottom = node};
-  
     });
     let padding = 80
     let height = bottom.x - top.x + padding;
